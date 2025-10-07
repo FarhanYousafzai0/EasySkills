@@ -1,9 +1,10 @@
+import Nav from '@/components/Nav'
 import React from 'react'
 
 const Home = () => {
   return (
     <div>
-      <h1 className=''></h1>
+     <Nav/>
     </div>
   )
 }
