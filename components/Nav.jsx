@@ -62,7 +62,6 @@ const Nav = () => {
               {/* Logo */}
               <Link href="/" className="flex items-center z-50">
                 <motion.div 
-                  whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                   className="text-2xl font-bold text-black"
                 >
@@ -80,7 +79,7 @@ const Nav = () => {
                       
                         whileTap={{ scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className={`block px-5 py-2.5 rounded-lg text-lg font-medium transition-all duration-300 ${
+                        className={`block px-5 py-2 rounded-full text-lg font-medium transition-all duration-300 ${
                           isActive
                             ? 'bg-black text-white shadow-md'
                             : 'text-gray-700 hover:bg-gray-50 hover:text-black'
@@ -111,7 +110,7 @@ const Nav = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="px-7 py-2.5 cursor-pointer bg-black text-white rounded-lg font-medium transition-all duration-300 hover:bg-gray-800 shadow-md hover:shadow-lg"
+                        className="px-7 py-2 cursor-pointer bg-black text-white rounded-full font-medium transition-all duration-300 hover:bg-gray-800 shadow-md hover:shadow-lg"
                       >
                         <span className="text-lg">Login</span>
                       </motion.button>

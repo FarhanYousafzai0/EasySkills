@@ -121,3 +121,8 @@
     overflow-x: hidden !important;
   }
 }
+
+body::-webkit-scrollbar {
+  width: 0px;
+}
+
