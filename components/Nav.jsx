@@ -58,7 +58,7 @@ const Nav = () => {
           className={`fixed top-0 left-0 right-0 z-50 `}
         >
           <div className="bg-white  mx-auto w-[95%] lg:w-[90%] mt-5 shadow rounded-xl border border-neutral-100">
-            <div className="flex items-center justify-between h-[80px] px-6 lg:px-8">
+            <div className="flex items-center justify-between lg:py-3 py-1 px-6 lg:px-8">
               {/* Logo */}
               <Link href="/" className="flex items-center z-50">
                 <motion.div 
@@ -79,7 +79,7 @@ const Nav = () => {
                       
                         whileTap={{ scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className={`block px-5 py-2 rounded-full text-lg font-medium transition-all duration-300 ${
+                        className={`block px-5 py-2 rounded-full  font-medium transition-all duration-300 ${
                           isActive
                             ? 'bg-black text-white shadow-md'
                             : 'text-gray-700 hover:bg-gray-50 hover:text-black'
@@ -112,7 +112,7 @@ const Nav = () => {
                         whileTap={{ scale: 0.95 }}
                         className="px-7 py-2 cursor-pointer bg-black text-white rounded-full font-medium transition-all duration-300 hover:bg-gray-800 shadow-md hover:shadow-lg"
                       >
-                        <span className="text-lg">Login</span>
+                        <span className="">Login</span>
                       </motion.button>
                     </SignInButton>
                   )}
@@ -229,7 +229,7 @@ const Nav = () => {
                         whileTap={{ scale: 0.95 }}
                         className="w-full px-6 py-2 cursor-pointer bg-black text-white rounded-xl font-medium transition-all duration-300 hover:bg-gray-800 shadow-lg active:shadow-md"
                       >
-                        <span className="text-lg">Login</span>
+                        <span className="">Login</span>
                       </motion.button>
                     </SignInButton>
                   )}
