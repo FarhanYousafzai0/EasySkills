@@ -96,9 +96,9 @@ export default function YoutubePricing() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
-                className="mt-8 w-full py-3 rounded-full text-white font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
+                className="mt-8 w-full py-3 rounded-full cursor-pointer text-white font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
               >
-                Get Started
+                Enroll Now
               </motion.button>
             </motion.div>
           ))}

@@ -78,7 +78,7 @@ const Nav = () => {
                         whileTap={{ scale: 0.95 }}
                         transition={{ duration: 0.2 }}
                         className={`block px-5 py-2.5 hover:scale-103  rounded-md text-[15px] font-medium transition-all duration-300 tracking-tight ${{
-                          true: 'bg-black text-white shadow-sm',
+                          true: 'cursor-pointer  font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-sm',
                           false: 'text-gray-700 hover:bg-white hover:text-black'
                         }[isActive]}`}
                       >
@@ -107,7 +107,7 @@ const Nav = () => {
                       <motion.button
                         
                         whileTap={{ scale: 0.95 }}
-                        className="px-6 py-2.5 cursor-pointer shadow-md hover:translate-x-2 bg-black text-white rounded-md text-[15px] font-medium transition-all duration-300  hover:shadow-md"
+                        className="px-6 py-2.5 cursor-pointer shadow-md hover:translate-x-2  text-white  bg-gradient-to-r from-[#9380FD] to-[#7866FA] rounded-md text-[15px] font-medium transition-all duration-300  hover:shadow-md"
                       >
                        <span className='flex items-center gap-2'>Login <LogIn size={20} /></span>
                       </motion.button>
@@ -185,7 +185,7 @@ const Nav = () => {
                             <motion.span
                               whileTap={{ scale: 0.95 }}
                               className={`block px-5 py-3 rounded-md text-[15px] font-medium transition-all duration-300 tracking-tight ${{
-                                true: 'bg-black text-white shadow-md',
+                                true: 'cursor-pointer font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md',
                                 false: 'text-gray-700 hover:bg-gray-100 active:bg-gray-100'
                               }[isActive]}`}
                             >
@@ -223,7 +223,7 @@ const Nav = () => {
                     <SignInButton mode="modal">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
-                        className="w-full px-6 py-3 cursor-pointer bg-black text-white rounded-md font-medium text-[15px] transition-all duration-300 hover:bg-gray-800 shadow-md"
+                        className="w-full px-6 py-3 cursor-pointer   bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white rounded-md font-medium text-[15px] transition-all duration-300 hover:bg-gray-800 shadow-md"
                       >
                         <span className='flex items-center justify-center gap-2'>Login <LogIn size={20} /></span>
                       </motion.button>
