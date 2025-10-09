@@ -122,7 +122,8 @@
   }
 }
 
-body::-webkit-scrollbar {
-  width: 0px;
-}
 
+
+.primary-color{
+  background-color: #9D4EDD;
+}
