@@ -1,4 +1,6 @@
+import Footer from '@/components/Footer'
 import Nav from '@/components/Nav'
+import YoutubePricing from '@/components/YoutubePricing'
 import React from 'react'
 
 const Home = () => {
@@ -6,7 +8,8 @@ const Home = () => {
    
    <>
    <Nav/>
-  
+  <YoutubePricing/>
+  <Footer/>
    </>
  
  
