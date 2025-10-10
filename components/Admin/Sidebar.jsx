@@ -1,59 +1,58 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   BarChart3,
-  ShoppingBag,
   Users,
-  DollarSign,
+  ClipboardList,
   Settings,
   MessageSquare,
   HelpCircle,
-} from 'lucide-react'
-import { motion } from 'framer-motion'
-import Image from 'next/image'
+  X,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
-const Sidebar = () => {
-  const pathname = usePathname()
+const Sidebar = ({ isOpen, toggleSidebar }) => {
+  const pathname = usePathname();
 
   const menu = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Reports', path: '/admin/reports', icon: BarChart3 },
-    { name: 'Products', path: '/admin/products', icon: ShoppingBag },
-    { name: 'Users', path: '/admin/users', icon: Users },
-    { name: 'Transactions', path: '/admin/transactions', icon: DollarSign },
-  ]
+    { name: 'Students', path: '/admin/users', icon: Users },
+    { name: 'Add Tasks', path: '/admin/tasks', icon: ClipboardList },
+  ];
 
   const tools = [
     { name: 'Settings', path: '/admin/settings', icon: Settings },
     { name: 'Feedback', path: '/admin/feedback', icon: MessageSquare },
     { name: 'Help', path: '/admin/help', icon: HelpCircle },
-  ]
+  ];
 
-  return (
-    <div className="hidden  md:flex flex-col justify-between  border mt-5  bg-white shadow-lg h-[95vh] w-84 rounded-3xl p-6">
-      {/* Logo Section */}
+  const sidebarContent = (
+<div className="flex flex-col justify-between h-full bg-white shadow-xl w-72 md:w-80 rounded-r-3xl p-6 sticky top-0">
+{/* Header */}
       <div>
-        <div className="flex items-center gap-3 mb-10">
-        <Link href="/" className="flex items-center z-50">
-                
-   
-    <Image src="/Logo.svg" alt="logo" width={150} height={150} />
-              </Link>
+        <div className="flex items-center justify-between mb-8">
+          <Image src="/Logo.svg" alt="logo" width={140} height={140} />
+          <button className="md:hidden" onClick={toggleSidebar}>
+            <X size={22} className="text-gray-700" />
+          </button>
         </div>
 
-        {/* Menu Items */}
+        {/* Menu */}
         <nav className="space-y-3">
           <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">Menu</h3>
           {menu.map((item) => {
-            const active = pathname === item.path
+            const active = pathname === item.path;
             return (
               <Link key={item.path} href={item.path}>
                 <motion.div
                   whileTap={{ scale: 0.97 }}
+                  onClick={toggleSidebar}
                   className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
                     active
                       ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md'
@@ -64,7 +63,7 @@ const Sidebar = () => {
                   {item.name}
                 </motion.div>
               </Link>
-            )
+            );
           })}
         </nav>
 
@@ -75,11 +74,12 @@ const Sidebar = () => {
         <nav className="space-y-3">
           <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">Tools</h3>
           {tools.map((item) => {
-            const active = pathname === item.path
+            const active = pathname === item.path;
             return (
               <Link key={item.path} href={item.path}>
                 <motion.div
                   whileTap={{ scale: 0.97 }}
+                  onClick={toggleSidebar}
                   className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
                     active
                       ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md'
@@ -90,15 +90,49 @@ const Sidebar = () => {
                   {item.name}
                 </motion.div>
               </Link>
-            )
+            );
           })}
         </nav>
       </div>
 
-      {/* Upgrade Card */}
-      
+      {/* Footer / Upgrade */}
+      <div className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white rounded-xl p-4 text-center cursor-pointer hover:opacity-90 transition">
+        <h4 className="text-sm font-semibold">Upgrade to Pro</h4>
+        <p className="text-xs text-white/80">Unlock advanced analytics</p>
+      </div>
     </div>
-  )
-}
+  );
 
-export default Sidebar
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex mt-5 h-[95vh]">{sidebarContent}</div>
+
+      {/* Mobile Sidebar */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black/40 z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={toggleSidebar}
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+              className="fixed left-0 top-0 bottom-0 z-50"
+            >
+              {sidebarContent}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+export default Sidebar;

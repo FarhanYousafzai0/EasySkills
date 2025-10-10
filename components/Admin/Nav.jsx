@@ -1,13 +1,21 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Image from 'next/image'
-import { Bell, Search } from 'lucide-react'
+import React from 'react';
+import Image from 'next/image';
+import { Bell, Search, Menu } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ toggleSidebar }) => {
   return (
     <div className="flex justify-between mt-5 border items-center bg-white shadow-sm p-4 md:p-6 rounded-xl mb-6">
-      {/* Search bar */}
+      {/* Mobile Sidebar Button */}
+      <button
+        className="md:hidden p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+        onClick={toggleSidebar}
+      >
+        <Menu size={22} className="text-gray-700" />
+      </button>
+
+      {/* Search Bar */}
       <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-lg w-full md:w-1/3">
         <Search size={18} className="text-gray-400" />
         <input
@@ -28,7 +36,7 @@ const Navbar = () => {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full overflow-hidden">
             <Image
-              src="/profile.jpg"
+              src="/Haseeb1.jpeg"
               alt="Admin"
               width={40}
               height={40}
@@ -42,7 +50,7 @@ const Navbar = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

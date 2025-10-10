@@ -1,27 +1,42 @@
+'use client';
 
-
-
-import Sidebar from "@/components/Admin/Sidebar";
-import Navbar from "@/components/Admin/Nav";
+import React, { useState } from 'react';
+import Sidebar from '@/components/Admin/Sidebar';
+import Navbar from '@/components/Admin/Nav';
 
 export default function AdminLayout({ children }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <>
-    
-    <div className="flex gap-4  mx-auto w-[95%]">
-    <Sidebar/>
+    <div className="flex w-full h-screen overflow-hidden">
+      {/* ✅ Sticky Sidebar (Desktop Only) */}
+      <div className="hidden md:block h-full sticky top-0">
+        <Sidebar />
+      </div>
 
-  <div className="flex flex-col w-full">
-  <Navbar/>
+      {/* ✅ Mobile Sidebar Drawer */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={toggleSidebar}
+          ></div>
 
-  {children}
-  </div>
-   
+          {/* Drawer Sidebar */}
+          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl p-6 animate-slideIn rounded-r-2xl">
+            <Sidebar />
+          </div>
+        </div>
+      )}
 
+      {/* ✅ Main Content Area */}
+      <div className="flex flex-col flex-1 overflow-y-auto bg-gray-50 px-4 md:px-6">
+        <Navbar toggleSidebar={toggleSidebar} />
+        <main className="flex-1 pb-10">{children}</main>
+      </div>
     </div>
-    
-    
-    </>
   );
 }
