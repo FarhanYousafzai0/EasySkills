@@ -4,6 +4,7 @@ import YoutubePricing from '@/components/YoutubePricing'
 import Hero from '@/components/Hero'
 import React from 'react'
 import FAQSection from '@/components/Faqs'
+import StatsAndEnroll from '@/components/StatsAndEnroll'
 
 const Home = () => {
   return (
@@ -12,7 +13,7 @@ const Home = () => {
   
    <Hero/>
   <YoutubePricing/>
-
+  <StatsAndEnroll/> 
   <FAQSection/>
  
    </>

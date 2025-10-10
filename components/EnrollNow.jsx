@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import emailjs from "@emailjs/browser";
-import { Send, Upload } from "lucide-react";
+import { Send, Upload, User, Mail, Phone } from "lucide-react";
 
 export default function EnrollNow() {
   const [formData, setFormData] = useState({
@@ -83,49 +82,56 @@ export default function EnrollNow() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+            {/* Name */}
+            <div className="relative">
+              <User className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 name="name"
                 placeholder="Full Name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full px-5 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none ${
+                className={`w-full pl-12 pr-5 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none cursor-pointer ${
                   errors.name ? "border border-red-500" : "border border-transparent"
                 }`}
               />
               {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
             </div>
 
-            <div>
+            {/* Email */}
+            <div className="relative">
+              <Mail className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
               <input
                 type="email"
                 name="email"
                 placeholder="Email Address"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full px-5 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none ${
+                className={`w-full pl-12 pr-5 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none cursor-pointer ${
                   errors.email ? "border border-red-500" : "border border-transparent"
                 }`}
               />
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
             </div>
 
-            <div>
+            {/* WhatsApp */}
+            <div className="relative">
+              <Phone className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 name="whatsapp"
                 placeholder="WhatsApp Number"
                 value={formData.whatsapp}
                 onChange={handleChange}
-                className={`w-full px-5 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none ${
+                className={`w-full pl-12 pr-5 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none cursor-pointer ${
                   errors.whatsapp ? "border border-red-500" : "border border-transparent"
                 }`}
               />
               {errors.whatsapp && <p className="text-red-400 text-sm mt-1">{errors.whatsapp}</p>}
             </div>
 
-            <div>
+            {/* Payment Upload */}
+            <div className="relative">
               <label
                 htmlFor="payment"
                 className="flex items-center justify-between w-full px-5 py-3 rounded-lg bg-white text-gray-700 cursor-pointer hover:bg-gray-50 transition"
@@ -148,12 +154,13 @@ export default function EnrollNow() {
               {errors.payment && <p className="text-red-400 text-sm mt-1">{errors.payment}</p>}
             </div>
 
+            {/* Submit Button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.97 }}
               disabled={isSubmitting}
               type="submit"
-              className="w-full py-3 bg-black text-white rounded-lg font-medium flex justify-center items-center gap-2 hover:bg-gray-900 transition shadow-md disabled:opacity-70"
+              className="w-full py-3 bg-white text-black rounded-lg font-medium flex justify-center items-center gap-2 hover:bg-gray-100 transition shadow-md disabled:opacity-70 cursor-pointer"
             >
               {isSubmitting ? "Submitting..." : <>Submit <Send size={18} /></>}
             </motion.button>
@@ -187,7 +194,7 @@ export default function EnrollNow() {
 
             <div className="p-4 bg-white/20 rounded-lg">
               <p className="text-white/90 text-sm">Account Title</p>
-              <p className="font-semibold">iSkills Pvt Ltd</p>
+              <p className="font-semibold">Easypay Pvt Ltd</p>
             </div>
 
             <div className="p-4 bg-white/20 rounded-lg">
