@@ -1,53 +1,58 @@
 "use client"
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 export default function YoutubePricing() {
   const [isYearly, setIsYearly] = useState(false);
 
   const plans = [
     {
-      title: '1-on-1 Mentorship',
+      title: "1-on-1 Mentorship Plan",
       monthlyPrice: 199,
       yearlyPrice: 179,
       features: [
-        'Weekly Coaching Calls',
-        'Personal Channel Review',
-        'Monetization Strategy',
-        'Video SEO Optimization',
-        'Priority Email Support'
+        "Weekly Private Coaching Calls",
+        "Personal Channel Audit",
+        "Custom Monetization Strategy",
+        "YouTube SEO Optimization",
+        "Priority Email Support"
       ],
     },
     {
-      title: '2-Month Mastery Program',
+      title: "Premium Mentorship (2-Month Program)",
       monthlyPrice: 499,
       yearlyPrice: 449,
       features: [
-        'Complete Channel Setup',
-        'Content Strategy Blueprint',
-        'Performance Analytics Review',
-        'Monetization & Growth Roadmap',
-        'Private Community Access'
+        "Full Channel Setup Assistance",
+        "Personalized Growth Roadmap",
+        "Advanced Analytics Training",
+        "Revenue Optimization Blueprint",
+        "Private Mentorship Access"
       ],
     }
   ];
 
   return (
-    <section className="w-[95%] min-h-screen mx-auto rounded-md mt-20 bg-gradient-to-br from-[#9380FD] via-[#7866FA] to-[#ECCFFE] py-20 text-white overflow-hidden">
+    <section
+      className="w-[95%] min-h-screen mx-auto rounded-md mt-20 
+      bg-gradient-to-br from-[#9380FD] via-[#7866FA] to-[#ECCFFE] 
+      py-20 text-white overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-        <motion.h2 
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-4xl md:text-5xl font-bold mb-4"
         >
-          Simple, Transparent Pricing
+          Personalized YouTube Mentorship
         </motion.h2>
 
         <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-          Choose a plan designed for your YouTube success. No hidden fees—just direct access to mentorship and strategy that works.
+          Choose the mentorship that fits your goals — designed for creators who
+          want to grow faster with direct, personal guidance.
         </p>
 
         {/* Toggle */}
@@ -55,13 +60,17 @@ export default function YoutubePricing() {
           <div className="bg-white/20 rounded-full flex p-1">
             <button
               onClick={() => setIsYearly(false)}
-              className={`px-6 py-2 text-sm font-medium rounded-full transition ${!isYearly ? 'bg-white text-black' : 'text-white'}`}
+              className={`px-6 py-2 text-sm font-medium rounded-full transition ${
+                !isYearly ? "bg-white text-black" : "text-white"
+              }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setIsYearly(true)}
-              className={`px-6 py-2 text-sm font-medium rounded-full transition ${isYearly ? 'bg-white text-black' : 'text-white'}`}
+              className={`px-6 py-2 text-sm font-medium rounded-full transition ${
+                isYearly ? "bg-white text-black" : "text-white"
+              }`}
             >
               Yearly
             </button>
@@ -76,10 +85,13 @@ export default function YoutubePricing() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.2 }}
-              className="bg-white text-gray-900 rounded-2xl shadow-xl p-8 flex flex-col justify-between hover:scale-[1.02] transition-transform"
+              className="bg-white text-gray-900 rounded-2xl shadow-xl p-8 flex flex-col justify-between 
+                hover:scale-[1.02] transition-transform"
             >
               <div>
-                <h3 className="text-2xl font-bold mb-3 text-[#3A2F80]">{plan.title}</h3>
+                <h3 className="text-2xl font-bold mb-3 text-[#3A2F80]">
+                  {plan.title}
+                </h3>
                 <p className="text-4xl font-semibold text-black mb-2">
                   ${isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                   <span className="text-gray-500 text-lg font-normal"> USD</span>
@@ -97,9 +109,12 @@ export default function YoutubePricing() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
-                className="mt-10 w-full py-3 rounded-md cursor-pointer text-white font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
+                className="mt-10 w-full py-3 rounded-md cursor-pointer text-white font-medium 
+                bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
               >
-                <span className='flex items-center justify-center gap-2'>Enroll Now <ArrowRight size={20}/></span>
+                <span className="flex items-center justify-center gap-2">
+                  Enroll Now <ArrowRight size={20} />
+                </span>
               </motion.button>
             </motion.div>
           ))}
