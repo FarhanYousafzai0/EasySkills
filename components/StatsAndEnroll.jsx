@@ -49,7 +49,7 @@ export default function StatsAndEnroll() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-2xl py-16 px-6 md:px-16 text-center"
+        className=" rounded-3xl  py-16 px-6 md:px-16 text-center"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
           Our Numbers Speak for Themselves
@@ -76,6 +76,8 @@ export default function StatsAndEnroll() {
           ))}
         </div>
       </motion.div>
+
+      
 
 
     </div>

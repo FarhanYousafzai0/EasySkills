@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 
 export default function YoutubePricing() {
   const [isYearly, setIsYearly] = useState(false);
@@ -98,7 +99,7 @@ export default function YoutubePricing() {
                 whileTap={{ scale: 0.97 }}
                 className="mt-10 w-full py-3 rounded-md cursor-pointer text-white font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
               >
-                Enroll Now
+                <span className='flex items-center justify-center gap-2'>Enroll Now <ArrowRight size={20}/></span>
               </motion.button>
             </motion.div>
           ))}

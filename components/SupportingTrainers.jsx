@@ -4,11 +4,11 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 
 const trainers = [
-  { name: 'Aswad Baloch', role: 'Director of Support', color: '#C6A0F6', img: '/dummy1.jpg' },
-  { name: 'Abid Rehman', role: 'WordPress Trainer', color: '#FAD4D4', img: '/dummy2.jpg' },
+  { name: 'Waleed Ahmed', role: 'Co-founder of EasySkills', color: '#FFFFFF', img: '/Waleed.jpg' },
+  { name: 'Farhan Yousafzai', role: 'AI Full-Stack Developer', color: '#ffffff', img: '/Farhan.jpeg' },
   { name: 'Faheem Akhtar', role: 'Technical SEO Expert', color: '#B6F4C2', img: '/dummy3.jpg' },
   { name: 'Ammar Ashfaq', role: 'Content Writing Trainer', color: '#FBE6B3', img: '/dummy4.jpg' },
-  { name: 'Khurram Malik', role: 'Freelance Trainer', color: '#BCE1F8', img: '/dummy5.jpg' },
+  { name: 'Haseeb Ali', role: 'Freelance Trainer', color: '#BCE1F8', img: '/Haseeb1.jpeg' },
   { name: 'Umair Shehzad', role: 'Freelance Trainer', color: '#E8C7F9', img: '/dummy6.jpg' },
 ]
 
@@ -42,15 +42,15 @@ export default function TrainerShowcase() {
               className="flex items-center gap-3"
             >
               <div
-                className="w-20 h-20 rounded-full overflow-hidden shadow-md flex items-center justify-center"
+                className="w-20 h-20  rounded-full overflow-hidden shadow-md flex items-center justify-center"
                 style={{ backgroundColor: trainer.color }}
               >
                 <Image
                   src={trainer.img}
                   alt={trainer.name}
-                  width={70}
+                  width={100}
                   height={70}
-                  className="rounded-full object-cover"
+                  className="rounded-full object-center"
                 />
               </div>
               <div className="text-left">
@@ -96,12 +96,12 @@ export default function TrainerShowcase() {
             >
               <div
                 className="w-20 h-20 rounded-full overflow-hidden shadow-md flex items-center justify-center"
-                style={{ backgroundColor: trainer.color }}
+                
               >
                 <Image
                   src={trainer.img}
                   alt={trainer.name}
-                  width={70}
+                  width={100}
                   height={70}
                   className="rounded-full object-cover"
                 />
