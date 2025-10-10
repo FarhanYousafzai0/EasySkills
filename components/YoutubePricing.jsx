@@ -34,7 +34,7 @@ export default function YoutubePricing() {
   ];
 
   return (
-    <section className="w-[90%] h-screen mx-auto rounded-md mt-20 bg-gradient-to-br from-[#9380FD] via-[#7866FA] to-[#ECCFFE] py-20 text-white">
+    <section className="w-[95%] h-screen mx-auto rounded-md mt-20 bg-gradient-to-br from-[#9380FD] via-[#7866FA] to-[#ECCFFE] py-20 text-white">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}

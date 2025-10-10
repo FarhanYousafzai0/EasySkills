@@ -16,19 +16,7 @@ export default function Footer() {
           <p className="text-sm text-gray-600">Sign up to receive health tips.</p>
 
           {/* Email Form */}
-          <form className="flex items-center bg-gray-100 rounded-full p-1 w-full max-w-sm">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 bg-transparent px-4 py-2 text-sm text-gray-700 outline-none rounded-full"
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-900 transition flex items-center gap-2"
-            >
-              Submit <Send size={14} />
-            </button>
-          </form>
+         
 
           <p className="text-xs text-gray-500 max-w-sm">
             By subscribing you agree to our <span className="underline cursor-pointer">Privacy Policy</span> and provide consent to receive updates from our company.
