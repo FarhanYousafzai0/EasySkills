@@ -12,6 +12,7 @@ const Home = () => {
   
    <Hero/>
   <YoutubePricing/>
+
   <FAQSection/>
  
    </>

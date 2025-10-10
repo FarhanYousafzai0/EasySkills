@@ -34,8 +34,8 @@ export default function YoutubePricing() {
   ];
 
   return (
-    <section className="w-[95%] h-screen mx-auto rounded-md mt-20 bg-gradient-to-br from-[#9380FD] via-[#7866FA] to-[#ECCFFE] py-20 text-white">
-      <div className="max-w-7xl mx-auto px-6 text-center">
+    <section className="w-[95%] min-h-screen mx-auto rounded-md mt-20 bg-gradient-to-br from-[#9380FD] via-[#7866FA] to-[#ECCFFE] py-20 text-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -96,7 +96,7 @@ export default function YoutubePricing() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
-                className="mt-8 w-full py-3 rounded-full cursor-pointer text-white font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
+                className="mt-10 w-full py-3 rounded-md cursor-pointer text-white font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90"
               >
                 Enroll Now
               </motion.button>

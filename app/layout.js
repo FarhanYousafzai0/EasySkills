@@ -2,6 +2,7 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import Nav from "@/components/Nav";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 // Add Poppins as a cool and modern font
 const poppins = Poppins({
@@ -35,6 +36,11 @@ export default function RootLayout({ children }) {
         >
           
           {children}
+          <WhatsAppButton 
+  phoneNumber="923001234567" 
+  message="Hello! I'd like to know more" 
+  position="bottom-right" 
+/>
         </body>
       </html>
     </ClerkProvider>
