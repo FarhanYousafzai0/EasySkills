@@ -67,7 +67,7 @@ export default function StatsAndEnroll() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.2 }}
-              className="flex flex-col items-center bg-gradient-to-br hover:scale-105 transition-all duration-300 from-[#9380FD] to-[#7866FA]  p-6 rounded-2xl shadow-sm transition"
+              className="flex flex-col items-center bg-gradient-to-r from-[#9380FD] to-[#7866FA]  p-6 rounded-2xl shadow-sm transition"
             >
               <div className="p-4 bg-white rounded-full shadow-md mb-3">{stat.icon}</div>
               <h3 className="text-3xl font-bold text-white mb-1">{stat.value}</h3>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <div className="w-full   bg-gradient-to-br mt-100  text-gray-800  px-6">
+    <footer className="w-full h-sc bg-gradient-to-br mt-20  text-gray-800 py-16 px-6">
       <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-sm p-10 md:p-16 flex flex-col md:flex-row md:justify-between gap-12 border border-gray-100">
         {/* Left Section */}
         <div className="flex-1 space-y-6">
@@ -28,7 +28,6 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-3">Care Plans</h3>
             <ul className="space-y-2 text-gray-600">
-              <li className="hover:text-black cursor-pointer">Sexual Health</li>
               <li className="hover:text-black cursor-pointer">Weight Loss</li>
               <li className="hover:text-black cursor-pointer">Travel Kit</li>
             </ul>
@@ -76,6 +75,6 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto text-center mt-10 text-sm text-gray-500 border-t border-gray-200 pt-6">
         © 2025 joey med. All rights reserved.
       </div>
-    </div>
+    </footer>
   );
 }
