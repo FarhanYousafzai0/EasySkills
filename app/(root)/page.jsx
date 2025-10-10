@@ -5,7 +5,7 @@ import Hero from '@/components/Hero'
 import React from 'react'
 import FAQSection from '@/components/Faqs'
 import StatsAndEnroll from '@/components/StatsAndEnroll'
-import SupportingTrainers from '@/components/SupportingTrainers'
+import TrainerShowcase from '@/components/SupportingTrainers'
 
 const Home = () => {
   return (
@@ -15,7 +15,7 @@ const Home = () => {
    <Hero/>
   <YoutubePricing/>
   <StatsAndEnroll/> 
-  <SupportingTrainers/>
+<TrainerShowcase/>
   <FAQSection/>
  
    </>
