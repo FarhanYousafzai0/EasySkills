@@ -27,7 +27,7 @@ const BatchDashboard = () => {
         <div className="flex bg-gray-100 p-1 rounded-full text-sm font-medium">
           <button
             onClick={() => setActiveTab('all')}
-            className={`px-5 py-2 rounded-full transition-all duration-300 ${
+            className={`px-5 py-2 cursor-pointer rounded-full transition-all duration-300 ${
               activeTab === 'all'
                 ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-200'
@@ -37,7 +37,7 @@ const BatchDashboard = () => {
           </button>
           <button
             onClick={() => setActiveTab('add')}
-            className={`px-5 py-2 rounded-full transition-all duration-300 ${
+            className={`px-5 py-2 rounded-full  cursor-pointer transition-all duration-300 ${
               activeTab === 'add'
                 ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-200'
