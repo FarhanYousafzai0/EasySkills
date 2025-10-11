@@ -14,27 +14,27 @@ import {
   ExternalLink,
   TrendingUp,
 } from "lucide-react";
+import CountUp from "react-countup";
 
-// ApexCharts (Next.js SSR)
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export default function Dashboard() {
   const router = useRouter();
 
-  // ---- Mock analytics (wire to MongoDB later) ----
+  const [activeCard, setActiveCard] = useState(null);
+
   const [activeBatches] = useState(3);
   const [sessionsThisWeek] = useState(5);
-  const [studentsTotal] = useState("1,284");
-  const [tasksTotal] = useState("392");
-  const [assignmentsSubmitted] = useState("2,145");
+  const [studentsTotal] = useState(1284);
+  const [tasksTotal] = useState(392);
+  const [assignmentsSubmitted] = useState(2145);
 
-  // Example upcoming sessions (replace with GET /api/sessions?upcoming=true later)
   const [sessions] = useState([
     {
       id: "S-311",
       batch: "Batch 2",
       topic: "React Fundamentals",
-      date: new Date(), // today
+      date: new Date(),
       time: "20:00",
       link: "https://zoom.us/j/123456789",
       recurring: true,
@@ -43,61 +43,62 @@ export default function Dashboard() {
       id: "S-312",
       batch: "Batch 3",
       topic: "AI Foundations",
-      date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // in 2 days
+      date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       time: "21:00",
       link: "https://zoom.us/j/987654321",
       recurring: true,
     },
   ]);
 
-  // Next happening (today if available, else nearest future)
   const nextSession = useMemo(() => {
     const now = new Date();
     const copy = [...sessions].sort((a, b) => +a.date - +b.date);
-    return copy.find((s) => new Date(s.date).setHours(0,0,0,0) >= now.setHours(0,0,0,0));
+    return copy.find((s) => new Date(s.date).setHours(0, 0, 0, 0) >= now.setHours(0, 0, 0, 0));
   }, [sessions]);
 
-  // ---- Cards data ----
   const cards = [
     {
       id: "students",
       title: "Total Students",
       value: studentsTotal,
       sub: "Enrolled this month",
-      icon: <Users size={26} className="text-[#7866FA]" />,
+      icon: <Users size={26} />,
       growth: "+4.8%",
       onClick: () => router.push("/admin/students"),
+      format: true,
     },
     {
       id: "batches",
       title: "Active Batches",
       value: activeBatches,
       sub: "Ongoing right now",
-      icon: <Layers size={26} className="text-[#7866FA]" />,
+      icon: <Layers size={26} />,
       growth: "+1",
       onClick: () => router.push("/admin/batches"),
+      format: false,
     },
     {
       id: "tasks",
       title: "Total Tasks",
       value: tasksTotal,
       sub: "Created by instructors",
-      icon: <ClipboardList size={26} className="text-[#7866FA]" />,
+      icon: <ClipboardList size={26} />,
       growth: "+2.4%",
       onClick: () => router.push("/admin/tasks/all"),
+      format: false,
     },
     {
       id: "sessions",
       title: "Live Sessions (Week)",
       value: sessionsThisWeek,
       sub: "Scheduled this week",
-      icon: <Video size={26} className="text-[#7866FA]" />,
+      icon: <Video size={26} />,
       growth: "+2",
       onClick: () => router.push("/admin/tasks/all"),
+      format: false,
     },
   ];
 
-  // ---- Charts (kept from your version) ----
   const barOptions = {
     chart: { type: "bar", toolbar: { show: false }, foreColor: "#999" },
     grid: { borderColor: "#eee" },
@@ -109,6 +110,7 @@ export default function Dashboard() {
     { name: "Students", data: [30, 45, 60, 80, 100, 75, 40] },
     { name: "Tasks", data: [20, 35, 28, 50, 60, 45, 25] },
   ];
+
   const radialOptions = {
     chart: { type: "radialBar", sparkline: { enabled: true } },
     plotOptions: {
@@ -123,7 +125,13 @@ export default function Dashboard() {
     labels: ["Course Completion"],
     colors: ["#9380FD"],
   };
+
   const radialSeries = [76];
+
+  const handleCardClick = (id, callback) => {
+    setActiveCard(id);
+    callback?.();
+  };
 
   return (
     <div className="w-full p-5 md:p-8 min-h-screen bg-gray-50 dark:bg-black">
@@ -144,7 +152,7 @@ export default function Dashboard() {
         </select>
       </div>
 
-      {/* 🔔 Upcoming Live Session (Banner) */}
+      {/* 🔔 Upcoming Live Session */}
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -160,10 +168,12 @@ export default function Dashboard() {
               {nextSession ? (
                 <>
                   <h3 className="text-lg font-semibold">
-                    {nextSession.topic} — <span className="opacity-90">{nextSession.batch}</span>
+                    {nextSession.topic} —{" "}
+                    <span className="opacity-90">{nextSession.batch}</span>
                   </h3>
                   <p className="text-sm opacity-90">
-                    {new Date(nextSession.date).toLocaleDateString()} • {nextSession.time}
+                    {new Date(nextSession.date).toLocaleDateString()} •{" "}
+                    {nextSession.time}
                     {nextSession.recurring ? " • Weekly" : ""}
                   </p>
                 </>
@@ -193,42 +203,71 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* Bento Cards */}
+      {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {cards.map((card) => (
-          <motion.button
-            key={card.id}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={card.onClick}
-            className="text-left p-6 rounded-2xl bg-white shadow-md hover:shadow-lg transition border border-gray-100"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <div className="p-3 rounded-xl bg-gray-100">{card.icon}</div>
-              <span
-                className={`text-sm font-medium ${
-                  String(card.growth).startsWith("+")
-                    ? "text-green-500"
-                    : "text-red-500"
+        {cards.map((card) => {
+          const isActive = activeCard === card.id;
+          return (
+            <motion.button
+              key={card.id}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleCardClick(card.id, card.onClick)}
+              className={`text-left p-6 rounded-2xl transition-all border cursor-pointer
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-lg"
+                    : "bg-white hover:shadow-lg border-gray-100 text-gray-900"
                 }`}
-              >
-                {card.growth}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <div
+                  className={`p-3 rounded-xl ${
+                    isActive ? "bg-white/20" : "bg-gray-100"
+                  }`}
+                >
+                  {React.cloneElement(card.icon, {
+                    className: isActive
+                      ? "text-white"
+                      : "text-[#7866FA]",
+                  })}
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    String(card.growth).startsWith("+")
+                      ? isActive
+                        ? "text-white"
+                        : "text-green-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {card.growth}
+                </span>
+              </div>
+              <h3 className={`text-2xl font-bold ${isActive ? "text-white" : ""}`}>
+                <CountUp
+                  end={card.value}
+                  duration={1.25}
+                  separator={card.format ? "," : ""}
+                  preserveValue={true}
+                />
+              </h3>
+              <p className={`text-sm ${isActive ? "text-white/90" : "text-gray-700"}`}>
+                {card.title}
+              </p>
+              <span className={`text-xs ${isActive ? "text-white/60" : "text-gray-400"}`}>
+                {card.sub}
               </span>
-            </div>
-            <h3 className="text-2xl font-bold">{card.value}</h3>
-            <p className="text-sm text-gray-700">{card.title}</p>
-            <span className="text-xs text-gray-400">{card.sub}</span>
-          </motion.button>
-        ))}
+            </motion.button>
+          );
+        })}
       </div>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Bar Chart */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
           className="bg-white rounded-2xl shadow-md p-6"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -237,11 +276,9 @@ export default function Dashboard() {
           <Chart options={barOptions} series={barSeries} type="bar" height={320} />
         </motion.div>
 
-        {/* Radial Chart */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
           className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center justify-center"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -250,26 +287,30 @@ export default function Dashboard() {
           <Chart options={radialOptions} series={radialSeries} type="radialBar" height={280} />
         </motion.div>
 
-        {/* Quick Insights */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
           className="bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Quick Insights</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Quick Insights
+          </h3>
           <ul className="text-sm text-gray-600 space-y-2 mb-6">
             <li className="flex items-center gap-2">
-              <Layers size={16} className="text-[#7866FA]" /> {activeBatches} batches active
+              <Layers size={16} className="text-[#7866FA]" />{" "}
+              <CountUp end={activeBatches} duration={1} preserveValue={true} /> batches active
             </li>
             <li className="flex items-center gap-2">
-              <Video size={16} className="text-[#7866FA]" /> {sessionsThisWeek} live sessions scheduled this week
+              <Video size={16} className="text-[#7866FA]" />{" "}
+              <CountUp end={sessionsThisWeek} duration={1} preserveValue={true} /> live sessions scheduled this week
             </li>
             <li className="flex items-center gap-2">
-              <Users size={16} className="text-[#7866FA]" /> {studentsTotal} total students
+              <Users size={16} className="text-[#7866FA]" />{" "}
+              <CountUp end={studentsTotal} duration={1.25} separator="," preserveValue={true} /> total students
             </li>
             <li className="flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#7866FA]" /> {assignmentsSubmitted} submissions overall
+              <TrendingUp size={16} className="text-[#7866FA]" />{" "}
+              <CountUp end={assignmentsSubmitted} duration={1.25} separator="," preserveValue={true} /> submissions overall
             </li>
           </ul>
           <button
