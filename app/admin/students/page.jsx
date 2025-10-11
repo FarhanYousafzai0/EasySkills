@@ -1,54 +1,94 @@
 'use client';
-import React, { useState } from 'react';
-import { Edit2, Trash2, Search, Filter } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Edit2,
+  Trash2,
+  Search,
+  Filter,
+  MoreVertical,
+  Clock3,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
+// Demo Data
 const initialStudents = [
-  { id: 1, name: 'Ali Khan', email: 'ali@example.com', batch: 'Batch 1', status: 'Active' },
-  { id: 2, name: 'Sara Malik', email: 'sara@example.com', batch: 'Batch 2', status: 'Pending' },
-  { id: 3, name: 'Hamza Iqbal', email: 'hamza@example.com', batch: 'Batch 1', status: 'Active' },
-  { id: 4, name: 'Hina Noor', email: 'hina@example.com', batch: 'Batch 3', status: 'Active' },
-  { id: 5, name: 'Adeel Raza', email: 'adeel@example.com', batch: 'Batch 2', status: 'Pending' },
+  { id: 1, name: 'Ali Khan', email: 'ali@example.com', batch: 'Batch 1', status: 'Active', daysLeft: 24 },
+  { id: 2, name: 'Sara Malik', email: 'sara@example.com', batch: 'Batch 2', status: 'Pending', daysLeft: 9 },
+  { id: 3, name: 'Hamza Iqbal', email: 'hamza@example.com', batch: 'Batch 1', status: 'Active', daysLeft: 4 },
+  { id: 4, name: 'Hina Noor', email: 'hina@example.com', batch: 'Batch 3', status: 'Active', daysLeft: 13 },
+  { id: 5, name: 'Adeel Raza', email: 'adeel@example.com', batch: 'Batch 2', status: 'Pending', daysLeft: 17 },
+  { id: 6, name: 'Amna Faisal', email: 'amna@example.com', batch: 'Batch 3', status: 'Active', daysLeft: 3 },
+  { id: 7, name: 'Tariq Ahmed', email: 'tariq@example.com', batch: 'Batch 1', status: 'Pending', daysLeft: 27 },
+  { id: 8, name: 'Iqra Zaman', email: 'iqra@example.com', batch: 'Batch 2', status: 'Active', daysLeft: 14 },
 ];
 
 export default function AllStudents() {
   const [students, setStudents] = useState(initialStudents);
   const [query, setQuery] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const batches = ['All', 'Batch 1', 'Batch 2', 'Batch 3'];
 
-  // Filter by search query and batch
-  const filtered = students.filter((s) => {
-    const matchesQuery =
-      s.name.toLowerCase().includes(query.toLowerCase()) ||
-      s.email.toLowerCase().includes(query.toLowerCase());
-    const matchesBatch = selectedBatch === 'All' || s.batch === selectedBatch;
-    return matchesQuery && matchesBatch;
-  });
+  // Search & filter logic
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      const matchesQuery =
+        s.name.toLowerCase().includes(query.toLowerCase()) ||
+        s.email.toLowerCase().includes(query.toLowerCase());
+      const matchesBatch = selectedBatch === 'All' || s.batch === selectedBatch;
+      return matchesQuery && matchesBatch;
+    });
+  }, [students, query, selectedBatch]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const paginated = filteredStudents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Helper to get badge color by status/days
+  const getBadgeColor = (status, days) => {
+    if (days <= 5) return 'bg-red-100 text-red-700';
+    if (days <= 14) return 'bg-amber-100 text-amber-700';
+    return status === 'Active'
+      ? 'bg-green-100 text-green-700'
+      : 'bg-gray-100 text-gray-600';
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="bg-white shadow-md rounded-2xl p-6 md:p-10"
+      className="bg-white/70 backdrop-blur-lg shadow-md border border-gray-200/50 rounded-2xl p-6 md:p-10"
     >
-      {/* HEADER */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">All Students</h2>
+        <div className="flex items-center gap-2">
+          <Users className="text-[#9380FD]" />
+          <h2 className="text-2xl font-bold text-gray-800">All Students</h2>
+        </div>
 
-        {/* Filter Bar */}
+        {/* Toolbar */}
         <div className="flex flex-wrap gap-3 items-center">
           {/* Search */}
-          <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg w-full sm:w-auto">
+          <motion.div
+            whileFocus={{ scale: 1.02 }}
+            className="flex items-center bg-gray-100 px-3 py-2 rounded-lg w-full sm:w-auto"
+          >
             <Search size={18} className="text-gray-500 mr-2" />
             <input
               placeholder="Search students..."
-              className="bg-transparent outline-none text-sm text-gray-700 w-full sm:w-40"
+              className="bg-transparent outline-none text-sm text-gray-700 w-full sm:w-48"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-          </div>
+          </motion.div>
 
           {/* Batch Filter */}
           <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-all">
@@ -56,7 +96,10 @@ export default function AllStudents() {
             <select
               className="bg-transparent outline-none text-sm text-gray-700"
               value={selectedBatch}
-              onChange={(e) => setSelectedBatch(e.target.value)}
+              onChange={(e) => {
+                setSelectedBatch(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               {batches.map((batch) => (
                 <option key={batch} value={batch}>
@@ -68,61 +111,104 @@ export default function AllStudents() {
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100 text-gray-700 text-sm">
-              <th className="text-left p-3 rounded-l-lg">Name</th>
-              <th className="text-left p-3">Email</th>
-              <th className="text-left p-3">Batch</th>
-              <th className="text-left p-3">Status</th>
-              <th className="text-right p-3 rounded-r-lg">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="text-center text-gray-500 py-6">
-                  No students found for this filter.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((s) => (
-                <motion.tr
-                  key={s.id}
-                  whileHover={{ scale: 1.01 }}
-                  className="border-b border-gray-200 text-gray-800 hover:bg-gray-50"
-                >
-                  <td className="p-3">{s.name}</td>
-                  <td className="p-3">{s.email}</td>
-                  <td className="p-3">{s.batch}</td>
-                  <td className="p-3">
-                    <span
-                      className={`px-3 py-1 text-xs rounded-full ${
-                        s.status === 'Active'
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-yellow-100 text-yellow-600'
-                      }`}
+      {/* Student Cards */}
+      <AnimatePresence>
+        {paginated.length === 0 ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-gray-500 py-6"
+          >
+            No students found for this filter.
+          </motion.p>
+        ) : (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: {
+                transition: { staggerChildren: 0.05 },
+              },
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+          >
+            {paginated.map((s) => (
+              <motion.div
+                key={s.id}
+                whileHover={{ y: -3, scale: 1.01 }}
+                className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-800">{s.name}</h3>
+                    <motion.div
+                      whileTap={{ scale: 0.9 }}
+                      className="relative group cursor-pointer"
                     >
-                      {s.status}
+                      <MoreVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <div className="absolute hidden group-hover:block top-6 right-0 bg-white shadow-md border border-gray-100 rounded-lg text-sm">
+                        <button className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2 text-gray-700">
+                          <Edit2 size={14} /> Edit
+                        </button>
+                        <button className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2 text-red-600">
+                          <Trash2 size={14} /> Delete
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-1">{s.email}</p>
+                  <p className="text-sm text-gray-600 mb-3">
+                    🎓 <span className="font-medium">{s.batch}</span>
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs px-3 py-1 rounded-full ${getBadgeColor(
+                        s.status,
+                        s.daysLeft
+                      )}`}
+                    >
+                      {s.status} — {s.daysLeft} Days Left
                     </span>
-                  </td>
-                  <td className="p-3 text-right flex justify-end gap-3">
-                    <button className="bg-gradient-to-r cursor-pointer from-[#9380FD] to-[#7866FA] text-white p-2 rounded-lg hover:opacity-90">
-                      <Edit2 size={16} />
-                    </button>
-                    <button className="bg-red-500 cursor-pointer text-white p-2 rounded-lg hover:bg-red-600">
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </motion.tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="flex justify-end mt-4 gap-2">
+                  <button className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white text-xs px-4 py-2 rounded-lg hover:opacity-90 transition">
+                    View
+                  </button>
+                  <button className="bg-gray-100 text-gray-700 text-xs px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                    Message
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="text-gray-700 text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }
