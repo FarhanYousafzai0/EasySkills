@@ -6,7 +6,7 @@ import { Bell, Search, Menu } from 'lucide-react';
 
 const Navbar = ({ toggleSidebar }) => {
   return (
-    <div className="flex justify-between mt-5 border items-center bg-white shadow-sm p-4 md:p-6 rounded-xl mb-6">
+    <div className="flex justify-between mt-5 border items-center bg-white shadow-sm p-4 md:p-3 rounded-xl mb-6">
       {/* Mobile Sidebar Button */}
       <button
         className="md:hidden p-2 hover:bg-gray-100 rounded-lg cursor-pointer"

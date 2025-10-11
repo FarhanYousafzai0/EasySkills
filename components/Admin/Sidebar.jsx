@@ -89,7 +89,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
   const hoverCls = 'hover:bg-gray-100 text-gray-700';
 
   const sidebarBody = (
-    <div className="flex flex-col justify-between h-full bg-white shadow-xl w-72 md:w-80 rounded-r-3xl p-6">
+    <div className="flex flex-col justify-between h-full bg-white ml-4 shadow-xl w-72 md:w-80 rounded-3xl p-6">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between mb-8">
@@ -213,10 +213,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
       </div>
 
       {/* FOOTER / CTA */}
-      <div className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white rounded-xl p-4 text-center cursor-pointer hover:opacity-90 transition">
-        <h4 className="text-sm font-semibold">Upgrade to Pro</h4>
-        <p className="text-xs text-white/80">Unlock advanced analytics</p>
-      </div>
+      
     </div>
   );
 

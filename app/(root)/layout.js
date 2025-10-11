@@ -1,5 +1,6 @@
 import Footer from "@/components/Footer";
 import Nav from "@/components/Nav";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function RootLayout({ children }) {
     return (
@@ -9,6 +10,12 @@ export default function RootLayout({ children }) {
           <Nav/>
           {children}
         <Footer/>
+
+        <WhatsAppButton
+  phoneNumber="923001234567" 
+  message="Hello! I'd like to know more" 
+  position="bottom-right" 
+/>
         </body>
       </html>
     );
