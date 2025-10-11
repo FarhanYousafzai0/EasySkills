@@ -53,12 +53,12 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
       },
 
       {
-        name: 'Tasks',
+        name: 'Tasks & Live Sessions',
         base: '/admin/tasks',
         icon: ClipboardList,
         children: [
-          { name: 'Add Task', path: '/admin/tasks/add' },
-          { name: 'All Tasks', path: '/admin/tasks' },
+          { name: 'Add Task & Live Session', path: '/admin/tasks/add' },
+          { name: 'All Tasks & Live Sessions', path: '/admin/tasks' },
           { name: 'Preview Tasks', path: '/admin/tasks/preview' }, // submissions view
         ],
       },

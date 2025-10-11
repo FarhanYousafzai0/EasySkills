@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Edit2,
@@ -11,9 +11,9 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 
-// Demo Data
 const initialStudents = [
   { id: 1, name: 'Ali Khan', email: 'ali@example.com', batch: 'Batch 1', status: 'Active', daysLeft: 24 },
   { id: 2, name: 'Sara Malik', email: 'sara@example.com', batch: 'Batch 2', status: 'Pending', daysLeft: 9 },
@@ -29,12 +29,20 @@ export default function AllStudents() {
   const [students, setStudents] = useState(initialStudents);
   const [query, setQuery] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('All');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   const batches = ['All', 'Batch 1', 'Batch 2', 'Batch 3'];
 
-  // Search & filter logic
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.filter-container')) setFilterOpen(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
       const matchesQuery =
@@ -45,14 +53,12 @@ export default function AllStudents() {
     });
   }, [students, query, selectedBatch]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginated = filteredStudents.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Helper to get badge color by status/days
   const getBadgeColor = (status, days) => {
     if (days <= 5) return 'bg-red-100 text-red-700';
     if (days <= 14) return 'bg-amber-100 text-amber-700';
@@ -67,14 +73,14 @@ export default function AllStudents() {
       animate={{ opacity: 1 }}
       className="bg-white/70 backdrop-blur-lg shadow-md border border-gray-200/50 rounded-2xl p-6 md:p-10"
     >
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
         <div className="flex items-center gap-2">
           <Users className="text-[#9380FD]" />
           <h2 className="text-2xl font-bold text-gray-800">All Students</h2>
         </div>
 
-        {/* Toolbar */}
+        {/* TOOLBAR */}
         <div className="flex flex-wrap gap-3 items-center">
           {/* Search */}
           <motion.div
@@ -90,28 +96,60 @@ export default function AllStudents() {
             />
           </motion.div>
 
-          {/* Batch Filter */}
-          <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-all">
-            <Filter size={18} className="text-gray-500 mr-2" />
-            <select
-              className="bg-transparent outline-none text-sm text-gray-700"
-              value={selectedBatch}
-              onChange={(e) => {
-                setSelectedBatch(e.target.value);
-                setCurrentPage(1);
-              }}
+          {/* Batch Filter (Animated Dropdown) */}
+          <div className="filter-container relative">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setFilterOpen((prev) => !prev)}
+              className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-all"
             >
-              {batches.map((batch) => (
-                <option key={batch} value={batch}>
-                  {batch}
-                </option>
-              ))}
-            </select>
+              <Filter size={18} className="text-gray-600" />
+              <span className="text-sm text-gray-700">
+                {selectedBatch === 'All' ? 'Filter by Batch' : selectedBatch}
+              </span>
+              <motion.span
+                animate={{ rotate: filterOpen ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronDown size={16} className="text-gray-600" />
+              </motion.span>
+            </motion.button>
+
+            <AnimatePresence>
+              {filterOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-2 w-48 bg-white/80 backdrop-blur-md border border-gray-200/50 shadow-lg rounded-xl z-20"
+                >
+                  {batches.map((batch) => (
+                    <motion.button
+                      key={batch}
+                      whileHover={{ x: 5 }}
+                      onClick={() => {
+                        setSelectedBatch(batch);
+                        setFilterOpen(false);
+                        setCurrentPage(1);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-all rounded-lg ${
+                        selectedBatch === batch
+                          ? 'bg-gradient-to-r from-[#9380FD]/80 to-[#7866FA]/80 text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {batch}
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
 
-      {/* Student Cards */}
+      {/* STUDENT GRID */}
       <AnimatePresence>
         {paginated.length === 0 ? (
           <motion.p
@@ -172,7 +210,7 @@ export default function AllStudents() {
                   </div>
                 </div>
 
-                {/* Footer Actions */}
+                {/* FOOTER BUTTONS */}
                 <div className="flex justify-end mt-4 gap-2">
                   <button className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white text-xs px-4 py-2 rounded-lg hover:opacity-90 transition">
                     View
@@ -187,7 +225,7 @@ export default function AllStudents() {
         )}
       </AnimatePresence>
 
-      {/* Pagination */}
+      {/* PAGINATION */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-8">
           <button
