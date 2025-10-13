@@ -1,28 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import CountUp from 'react-countup';
+import { useRouter } from 'next/navigation';
 import {
   ClipboardList,
   Layers,
   Video,
-  Trophy,
   TrendingUp,
   CheckCircle,
+  CalendarDays,
+  ExternalLink,
+  Clock,
+  MessageSquareWarning,
 } from 'lucide-react';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 export default function DashboardStudent() {
+  const router = useRouter();
+
+  // ----- STATE -----
   const [progress] = useState(68);
   const [tasksCompleted] = useState(24);
   const [totalTasks] = useState(35);
   const [sessions] = useState(5);
-  const [rank] = useState(12);
+  const [mentorshipDays] = useState(42);
+  const [issuesReported] = useState(2);
 
-  // Charts
+  const [upcomingSession] = useState({
+    topic: 'Next.js API Integration',
+    batch: 'Batch 12',
+    date: '2025-10-16',
+    time: '8:00 PM',
+    link: 'https://zoom.us/j/123456789',
+  });
+
+  const pendingTasks = totalTasks - tasksCompleted;
+
+  // ----- CHART DATA -----
   const weeklySeries = [{ name: 'Tasks Completed', data: [3, 5, 6, 4, 7, 8, 6] }];
   const weeklyOptions = {
     chart: { type: 'bar', toolbar: { show: false } },
@@ -36,7 +54,10 @@ export default function DashboardStudent() {
     plotOptions: {
       radialBar: {
         hollow: { size: '60%' },
-        dataLabels: { value: { fontSize: '20px' } },
+        dataLabels: {
+          name: { show: true, fontSize: '14px', color: '#666' },
+          value: { fontSize: '22px', color: '#7866FA', fontWeight: 600 },
+        },
       },
     },
     labels: ['Overall Progress'],
@@ -52,53 +73,121 @@ export default function DashboardStudent() {
     stroke: { curve: 'smooth', width: 3 },
     colors: ['#7866FA'],
     xaxis: { categories: ['Week 1', '2', '3', '4', '5', '6', '7'] },
+    grid: { borderColor: '#eee' },
   };
 
+  // ----- CARDS -----
   const cards = [
     {
       title: 'Completed Tasks',
       value: tasksCompleted,
       sub: `of ${totalTasks} total`,
-      icon: <CheckCircle size={24} />,
+      icon: <CheckCircle size={22} />,
+      color: 'bg-green-100',
+      text: 'text-green-600',
+      link: '/student/tasks',
     },
     {
-      title: 'Live Sessions',
-      value: sessions,
-      sub: 'This Week',
-      icon: <Video size={24} />,
+      title: 'Pending Tasks',
+      value: pendingTasks,
+      sub: 'Awaiting Submission',
+      icon: <ClipboardList size={22} />,
+      color: 'bg-yellow-100',
+      text: 'text-yellow-600',
+      link: '/student/tasks',
     },
     {
-      title: 'Rank',
-      value: rank,
-      sub: 'In Leaderboard',
-      icon: <Trophy size={24} />,
+      title: 'Mentorship Days Left',
+      value: mentorshipDays,
+      sub: 'in your program',
+      icon: <Clock size={22} />,
+      color: 'bg-blue-100',
+      text: 'text-blue-600',
+      link: '/student/dashboard',
     },
     {
-      title: 'Progress',
-      value: progress,
-      sub: '% Course Completion',
-      icon: <TrendingUp size={24} />,
+      title: 'Issues Reported',
+      value: issuesReported,
+      sub: 'Reported to Admin',
+      icon: <MessageSquareWarning size={22} />,
+      color: 'bg-red-100',
+      text: 'text-red-600',
+      link: '/student/report',
     },
   ];
 
+  // ----- UPCOMING SESSION -----
+  const nextSession = useMemo(() => upcomingSession, [upcomingSession]);
+
   return (
     <div className="p-5 md:p-8 bg-gray-50 min-h-screen">
+      {/* Header */}
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Dashboard</h1>
       <p className="text-gray-600 mb-8">
-        Overview of your learning progress, tasks, and upcoming sessions.
+        Track your progress, live sessions, and pending work.
       </p>
 
-      {/* Cards */}
+      {/* 🔔 Upcoming Live Session Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {/* Animated Clock Icon */}
+            <motion.div
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="p-3 rounded-xl bg-white/20 flex items-center justify-center"
+            >
+              <Clock size={26} />
+            </motion.div>
+            <div>
+              <p className="text-sm opacity-90">Next Live Session</p>
+              {nextSession ? (
+                <>
+                  <h3 className="text-xl font-semibold">
+                    {nextSession.topic} —{' '}
+                    <span className="opacity-90">{nextSession.batch}</span>
+                  </h3>
+                  <p className="text-sm opacity-90 flex items-center gap-1 mt-1">
+                    <CalendarDays size={14} /> {nextSession.date} •{' '}
+                    <strong className="text-white text-base">{nextSession.time}</strong>
+                  </p>
+                </>
+              ) : (
+                <h3 className="text-lg font-semibold">No sessions scheduled</h3>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            {nextSession?.link && (
+              <button
+                onClick={() => window.open(nextSession.link, '_blank')}
+                className="px-5 py-2.5 rounded-lg cursor-pointer bg-white text-[#5b4df5] font-semibold flex items-center gap-2 hover:bg-white/90 transition"
+              >
+                <ExternalLink size={16} />
+                Join Session
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {cards.map((c, i) => (
           <motion.div
             key={i}
             whileHover={{ scale: 1.04 }}
-            className="p-6 bg-white rounded-2xl shadow-md cursor-pointer border border-gray-100 hover:shadow-lg transition"
+            onClick={() => router.push(c.link)}
+            className="p-6 bg-white rounded-2xl shadow-md cursor-pointer border border-gray-100 hover:shadow-xl transition"
           >
             <div className="flex justify-between items-center mb-3">
-              <div className="p-3 rounded-xl bg-gradient-to-r from-[#9380FD]/10 to-[#7866FA]/10">
-                {React.cloneElement(c.icon, { className: 'text-[#7866FA]' })}
+              <div className={`p-3 rounded-xl ${c.color}`}>
+                {React.cloneElement(c.icon, { className: `${c.text}` })}
               </div>
               <span className="text-xs font-medium text-gray-500">{c.sub}</span>
             </div>

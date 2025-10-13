@@ -30,16 +30,16 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
   // 🧭 Navigation Links
   const nav = useMemo(
     () => [
-      { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+      { name: 'Dashboard', path: '/student', icon: LayoutDashboard },
 
       {
         name: 'My Tasks',
         base: '/student/tasks',
         icon: ClipboardList,
         children: [
-          { name: 'All Tasks', path: '/student/tasks' },
-          { name: 'Submit Task', path: '/student/tasks/submit' },
-          { name: 'Submitted Tasks', path: '/student/tasks/submitted' },
+          { name: 'All Tasks', path: '/student/task' },
+          { name: 'Submit Task', path: '/student/task/submit' },
+          { name: 'Submitted Tasks', path: '/student/task/submitted' },
         ],
       },
 
