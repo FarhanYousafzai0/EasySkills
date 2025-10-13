@@ -29,7 +29,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en" >
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} font-sans antialiased`}
         >

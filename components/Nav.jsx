@@ -1,115 +1,140 @@
-'use client'
+'use client';
+import { Home, HelpCircle,  GraduationCap,  VectorSquare,       UserPlus } from 'lucide-react'
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { SignInButton, UserButton, useUser } from '@clerk/nextjs'
-import { NavItems } from '@/lib/data'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, LogIn, Menu, X } from 'lucide-react'
-import Image from 'next/image'
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LogIn, Menu, X, LayoutDashboard } from 'lucide-react';
+import Image from 'next/image';
 
 const Nav = () => {
-  const pathname = usePathname()
-  const { isSignedIn } = useUser()
-  const [isVisible, setIsVisible] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
-  const [isAtTop, setIsAtTop] = useState(true)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname();
+  const { isSignedIn, user } = useUser();
 
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Navbar scroll behavior
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
+      const currentScrollY = window.scrollY;
+      setIsAtTop(currentScrollY < 10);
+      if (currentScrollY > lastScrollY && currentScrollY > 80) setIsVisible(false);
+      else setIsVisible(true);
+      setLastScrollY(currentScrollY);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
-      setIsAtTop(currentScrollY < 10)
-
-      if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        setIsVisible(false)
-      } else {
-        setIsVisible(true)
-      }
-
-      setLastScrollY(currentScrollY)
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
-
+  // Disable scroll when mobile menu open
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isMobileMenuOpen])
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : 'unset';
+  }, [isMobileMenuOpen]);
 
-  const closeMobileMenu = () => setIsMobileMenuOpen(false)
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // 🔐 Role-based dashboard link
+  const role = user?.publicMetadata?.role;
+  const dashboardPath = role === 'admin' ? '/admin' : role === 'student' ? '/student' : '/';
+
+  // 🔎 Navigation links (show dashboard only after login)
+ const baseLinks = [
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Trainings', path: '/trainings', icon: GraduationCap },
+    { 
+      name: 'Tools', 
+      path: '/tools', 
+      icon: VectorSquare,
+      children: [
+        { name: 'Tool 1', path: '/tools/tool1' },
+        { name: 'Tool 2', path: '/tools/tool2' },
+        { name: 'Tool 3', path: '/tools/tool3' },
+      ]
+    },
+    { name: 'Enroll Now', path: '/enroll', icon: UserPlus },
+  ]
+
+  const authedLinks = [
+    { name: 'Dashboard', path: dashboardPath, icon: LayoutDashboard },
+  ];
+
+  const NavItems = isSignedIn ? [...baseLinks, ...authedLinks] : baseLinks;
 
   return (
     <>
-      <div className='relative flex justify-between items-center '>
+      {/* ===== Desktop Navbar ===== */}
+      <div className="relative flex justify-between items-center">
         <motion.nav
           initial={{ y: 0 }}
-          animate={{ 
-            y: isVisible ? 0 : -100,
-            opacity: isAtTop ? 1 : 0.98
-          }}
+          animate={{ y: isVisible ? 0 : -100, opacity: isAtTop ? 1 : 0.98 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className={`fixed top-0 left-0 right-0 z-50`}
+          className="fixed top-0 left-0 right-0 z-50"
         >
-          <div className="bg-white rounded-md mx-auto w-full  md:mt-0 mt-5 ">
-            <div className="flex items-center justify-between  p-3 lg:px-8">
+          <div className="bg-white rounded-md mx-auto w-full md:mt-0 mt-5">
+            <div className="flex items-center justify-between p-3 lg:px-8">
+              
               {/* Logo */}
               <Link href="/" className="flex items-center z-50">
-                
-   
-    <Image src="/Logo.svg" alt="logo" width={150} height={150} />
+                <Image src="/Logo.svg" alt="logo" width={150} height={150} />
               </Link>
 
-              {/* Desktop Navigation Items */}
+              {/* Desktop Nav Items */}
               <div className="hidden md:flex items-center space-x-2 bg-gray-100 rounded-lg px-2 py-1">
                 {NavItems.map((item) => {
-                  const isActive = pathname === item.path
+                  const isActive = pathname === item.path;
                   return (
                     <Link key={item.path} href={item.path}>
                       <motion.span
-                      
                         whileTap={{ scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className={`block px-5 py-2.5 hover:scale-103  rounded-md text-[15px] font-medium transition-all duration-300 tracking-tight ${{
-                          true: 'cursor-pointer  font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-sm',
-                          false: 'text-gray-700 hover:bg-white hover:text-black'
-                        }[isActive]}`}
+                        className={`block px-5 py-2.5 rounded-md text-[15px] font-medium transition-all duration-300 tracking-tight ${
+                          isActive
+                            ? 'cursor-pointer bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-sm'
+                            : 'text-gray-700 hover:bg-white hover:text-black'
+                        }`}
                       >
-                        <span className='flex items-center gap-2'> {item.icon && <item.icon size={20} />} {item.name}</span>
+                        <span className="flex items-center gap-2">
+                          {item.icon && <item.icon size={20} />} {item.name}
+                        </span>
                       </motion.span>
                     </Link>
-                  )
+                  );
                 })}
               </div>
 
-              {/* Auth Section & Mobile Menu Button */}
+              {/* Auth Section */}
               <div className="flex items-center gap-4">
-                {/* Desktop Auth */}
-                <div className="hidden md:block">
+                <div className="hidden md:flex items-center gap-3">
                   {isSignedIn ? (
-                    <UserButton
-                      afterSignOutUrl="/"
-                      appearance={{
-                        elements: {
-                          avatarBox: 'w-10 h-10 ring-2 ring-gray-200 hover:ring-black transition-all'
-                        }
-                      }}
-                    />
+                    <>
+                      <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                          elements: {
+                            avatarBox:
+                              'w-10 h-10 ring-2 ring-gray-200 hover:ring-black transition-all',
+                          },
+                        }}
+                      />
+                      <span className="text-gray-800 font-medium">
+                        {user?.firstName || 'User'}
+                      </span>
+                    </>
                   ) : (
-                    <SignInButton mode="modal">
+                    <SignInButton afterSignInUrl="/post-auth" mode="modal">
                       <motion.button
-                        
                         whileTap={{ scale: 0.95 }}
-                        className="px-6 py-2.5 cursor-pointer shadow-md hover:translate-x-2 group  text-white  bg-gradient-to-r from-[#9380FD] to-[#7866FA] rounded-md text-[15px] font-medium transition-all duration-300  hover:shadow-md"
+                        className="px-6 py-2.5 cursor-pointer shadow-md text-white bg-gradient-to-r from-[#9380FD] to-[#7866FA] rounded-md text-[15px] font-medium transition-all duration-300 hover:shadow-md hover:translate-x-2"
                       >
-                       <span className='flex items-center gap-2'>Login <LogIn  size={20} /></span>
+                        <span className="flex items-center gap-2">
+                          Login <LogIn size={20} />
+                        </span>
                       </motion.button>
                     </SignInButton>
                   )}
@@ -134,7 +159,7 @@ const Nav = () => {
         </motion.nav>
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* ===== Mobile Sidebar ===== */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -173,7 +198,7 @@ const Nav = () => {
                 <div className="flex-1 overflow-y-auto py-6 px-4">
                   <nav className="flex flex-col gap-2">
                     {NavItems.map((item, index) => {
-                      const isActive = pathname === item.path
+                      const isActive = pathname === item.path;
                       return (
                         <motion.div
                           key={item.path}
@@ -184,16 +209,19 @@ const Nav = () => {
                           <Link href={item.path} onClick={closeMobileMenu}>
                             <motion.span
                               whileTap={{ scale: 0.95 }}
-                              className={`block px-5 py-3 rounded-md text-[15px] font-medium transition-all duration-300 tracking-tight ${{
-                                true: 'cursor-pointer font-medium bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md',
-                                false: 'text-gray-700 hover:bg-gray-100 active:bg-gray-100'
-                              }[isActive]}`}
+                              className={`block px-5 py-3 rounded-md text-[15px] font-medium transition-all duration-300 tracking-tight ${
+                                isActive
+                                  ? 'cursor-pointer bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md'
+                                  : 'text-gray-700 hover:bg-gray-100 active:bg-gray-100'
+                              }`}
                             >
-                              <span className='flex items-center gap-2'> {item.icon && <item.icon size={20} />} {item.name}</span> 
+                              <span className="flex items-center gap-2">
+                                {item.icon && <item.icon size={20} />} {item.name}
+                              </span>
                             </motion.span>
                           </Link>
                         </motion.div>
-                      )
+                      );
                     })}
                   </nav>
                 </div>
@@ -211,21 +239,23 @@ const Nav = () => {
                         afterSignOutUrl="/"
                         appearance={{
                           elements: {
-                            avatarBox: 'w-10 h-10'
-                          }
+                            avatarBox: 'w-10 h-10',
+                          },
                         }}
                       />
                       <span className="text-sm font-medium text-gray-700">
-                        My Account
+                        {user?.firstName || 'My Account'}
                       </span>
                     </div>
                   ) : (
                     <SignInButton mode="modal">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
-                        className="w-full px-6 py-3 cursor-pointer   bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white rounded-md font-medium text-[15px] transition-all duration-300 hover:bg-gray-800 shadow-md"
+                        className="w-full px-6 py-3 cursor-pointer bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white rounded-md font-medium text-[15px] transition-all duration-300 hover:bg-gray-800 shadow-md"
                       >
-                        <span className='flex items-center justify-center gap-2'>Login <LogIn size={20} /></span>
+                        <span className="flex items-center justify-center gap-2">
+                          Login <LogIn size={20} />
+                        </span>
                       </motion.button>
                     </SignInButton>
                   )}
@@ -236,7 +266,7 @@ const Nav = () => {
         )}
       </AnimatePresence>
     </>
-  )
-}
+  );
+};
 
-export default Nav
+export default Nav;
