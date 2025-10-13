@@ -78,15 +78,7 @@ export default function DashboardStudent() {
 
   // ----- CARDS -----
   const cards = [
-    {
-      title: 'Completed Tasks',
-      value: tasksCompleted,
-      sub: `of ${totalTasks} total`,
-      icon: <CheckCircle size={22} />,
-      color: 'bg-green-100',
-      text: 'text-green-600',
-      link: '/student/tasks',
-    },
+   
     {
       title: 'Pending Tasks',
       value: pendingTasks,
@@ -96,6 +88,15 @@ export default function DashboardStudent() {
       text: 'text-yellow-600',
       link: '/student/tasks',
     },
+    {
+        title: 'Completed Tasks',
+        value: tasksCompleted,
+        sub: `of ${totalTasks} total`,
+        icon: <CheckCircle size={22} />,
+        color: 'bg-green-100',
+        text: 'text-green-600',
+        link: '/student/tasks',
+      },
     {
       title: 'Mentorship Days Left',
       value: mentorshipDays,
@@ -129,52 +130,60 @@ export default function DashboardStudent() {
 
       {/* 🔔 Upcoming Live Session Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md"
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {/* Animated Clock Icon */}
-            <motion.div
-              animate={{ rotate: [0, 15, -15, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-              className="p-3 rounded-xl bg-white/20 flex items-center justify-center"
-            >
-              <Clock size={26} />
-            </motion.div>
-            <div>
-              <p className="text-sm opacity-90">Next Live Session</p>
-              {nextSession ? (
-                <>
-                  <h3 className="text-xl font-semibold">
-                    {nextSession.topic} —{' '}
-                    <span className="opacity-90">{nextSession.batch}</span>
-                  </h3>
-                  <p className="text-sm opacity-90 flex items-center gap-1 mt-1">
-                    <CalendarDays size={14} /> {nextSession.date} •{' '}
-                    <strong className="text-white text-base">{nextSession.time}</strong>
-                  </p>
-                </>
-              ) : (
-                <h3 className="text-lg font-semibold">No sessions scheduled</h3>
-              )}
-            </div>
-          </div>
+  initial={{ opacity: 0, y: 14 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="mb-8 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md"
+>
+  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    {/* LEFT — Session Info */}
+    <div className="text-white text-center md:text-left w-full md:w-auto flex-1">
+      <p className="text-sm opacity-90 mb-2 uppercase tracking-wide text-center md:text-left">
+        Next Live Session
+      </p>
 
-          <div className="flex gap-2">
-            {nextSession?.link && (
-              <button
-                onClick={() => window.open(nextSession.link, '_blank')}
-                className="px-5 py-2.5 rounded-lg cursor-pointer bg-white text-[#5b4df5] font-semibold flex items-center gap-2 hover:bg-white/90 transition"
-              >
-                <ExternalLink size={16} />
-                Join Session
-              </button>
-            )}
+      {nextSession ? (
+        <>
+          {/* Topic + Batch */}
+          <h3 className="text-xl md:text-2xl font-semibold mb-4 leading-snug text-center md:text-left">
+            {nextSession.topic}{' '}
+            <span className="opacity-90 text-white/80">— {nextSession.batch}</span>
+          </h3>
+
+          {/* Date + Time */}
+          <div className="flex flex-col sm:flex-row justify-center md:justify-start items-center gap-3">
+            <span className="text-2xl sm:text-3xl font-medium text-white/90">
+              {new Date(nextSession.date).toLocaleDateString('en-US', {
+                weekday: 'long', // e.g. Thursday
+                month: 'short',  // e.g. Oct
+                day: 'numeric',  // e.g. 16
+              })}
+            </span>
+
+            <strong className="text-5xl sm:text-6xl font-bold tracking-tight text-white">
+              {nextSession.time}
+            </strong>
           </div>
-        </div>
-      </motion.div>
+        </>
+      ) : (
+        <h3 className="text-lg font-semibold text-center md:text-left text-white">
+          No sessions scheduled
+        </h3>
+      )}
+    </div>
+
+    {/* RIGHT — Join Button */}
+    {nextSession?.link && (
+      <div className="flex justify-center md:justify-end w-full md:w-auto">
+        <button
+          onClick={() => window.open(nextSession.link, '_blank')}
+          className="px-5 py-2.5 rounded-lg cursor-pointer bg-white text-[#5b4df5] font-semibold flex items-center gap-2 hover:bg-white/90 transition shadow-sm"
+        >
+          Join Session →
+        </button>
+      </div>
+    )}
+  </div>
+</motion.div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
