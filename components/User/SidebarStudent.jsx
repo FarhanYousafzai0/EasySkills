@@ -54,8 +54,8 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
         icon: MessageSquareWarning,
         children: [
           { name: 'Report Issue', path: '/student/report' },
-          { name: 'All Issues', path: '/student/issues' },
-          { name: 'Resolved Issues', path: '/student/issues/resolved' },
+          { name: 'All Issues', path: '/student/report/allreports' },
+        
         ],
       },
 
