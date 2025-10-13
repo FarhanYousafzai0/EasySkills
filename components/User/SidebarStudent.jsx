@@ -17,12 +17,14 @@ import {
   X,
   UploadCloud,
   CheckCircle2,
+  MessageSquareWarning,
+  Package,
+  BookOpen,
 } from 'lucide-react';
 
 /**
  * 🎓 SidebarStudent
- * Full-featured responsive sidebar for Student Dashboard
- * Includes dropdowns, smooth animations, and mobile drawer behavior
+ * Enhanced version: includes Issues dropdown, Courses, and Buy Tools sections.
  */
 export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {} }) {
   const pathname = usePathname();
@@ -45,7 +47,20 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
 
       { name: 'Live Sessions', path: '/student/live-sessions', icon: Video },
       { name: 'Leaderboard', path: '/student/leaderboard', icon: BarChart2 },
-      { name: 'Report Issue', path: '/student/report', icon: MessageSquare },
+
+      {
+        name: 'Report Issues',
+        base: '/student/report',
+        icon: MessageSquareWarning,
+        children: [
+          { name: 'Report Issue', path: '/student/report' },
+          { name: 'All Issues', path: '/student/issues' },
+          { name: 'Resolved Issues', path: '/student/issues/resolved' },
+        ],
+      },
+
+      { name: 'Buy Tools', path: '/student/tools', icon: Package },
+      { name: 'Courses', path: '/student/courses', icon: BookOpen },
     ],
     []
   );
@@ -56,7 +71,7 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
     { name: 'Help', path: '/student/help', icon: HelpCircle },
   ];
 
-  // 🔽 Dropdown Open/Close Logic
+  // 🔽 Dropdown Logic
   const [open, setOpen] = useState({});
   useEffect(() => {
     const next = {};
@@ -68,7 +83,6 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
     setOpen((prev) => ({ ...prev, ...next }));
   }, [pathname, nav]);
 
-  // 🔍 Helpers for Active Routes
   const isActive = (path) => pathname === path;
   const isGroupActive = (base) => pathname === base || pathname.startsWith(base + '/');
 
@@ -80,8 +94,8 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
 
   // 🌈 Sidebar Content
   const sidebarBody = (
-    <div className="flex flex-col justify-between h-full bg-white ml-4 shadow-xl w-72 md:w-80 rounded-3xl p-6">
-      {/* ─────── Header ─────── */}
+    <div className="flex flex-col justify-between h-full overflow-hidden bg-white ml-4 shadow-xl w-72 md:w-80 rounded-3xl p-6">
+      {/* ───── Header ───── */}
       <div>
         <div className="flex items-center justify-between mb-8">
           <Image src="/Logo.svg" alt="LMS Logo" width={140} height={36} priority />
@@ -90,7 +104,7 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
           </button>
         </div>
 
-        {/* ─────── Menu Section ─────── */}
+        {/* ───── Menu ───── */}
         <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">
           Menu
         </h3>
@@ -139,10 +153,12 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
                                   : 'text-gray-600 hover:bg-gray-100'
                               }`}
                             >
-                              {/* Contextual Icons for Tasks */}
+                              {/* Context Icons for Sub-Items */}
                               {child.name === 'Submit Task' ? (
                                 <UploadCloud size={16} className="text-[#7866FA]" />
                               ) : child.name === 'Submitted Tasks' ? (
+                                <CheckCircle2 size={16} className="text-green-500" />
+                              ) : child.name === 'Resolved Issues' ? (
                                 <CheckCircle2 size={16} className="text-green-500" />
                               ) : (
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
@@ -176,7 +192,7 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
         {/* Divider */}
         <div className="my-6 border-t border-gray-200" />
 
-        {/* ─────── Tools Section ─────── */}
+        {/* ───── Tools Section ───── */}
         <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">
           Tools
         </h3>
@@ -195,20 +211,20 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
         </nav>
       </div>
 
-      {/* ─────── Footer ─────── */}
+      {/* ───── Footer ───── */}
       <div className="pt-6 border-t border-gray-200 text-xs text-gray-500">
         © 2025 LMS Platform
       </div>
     </div>
   );
 
-  // 🌍 Sidebar Wrapper (Desktop + Mobile)
+  // 🌍 Wrapper
   return (
     <>
-      {/* Desktop Version */}
+      {/* Desktop */}
       <div className="hidden md:flex mt-5 h-[95vh]">{sidebarBody}</div>
 
-      {/* Mobile Drawer Version */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isOpen && (
           <>
