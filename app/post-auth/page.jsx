@@ -8,7 +8,7 @@ export default function PostAuth() {
   useEffect(() => {
     const syncUser = async () => {
       await fetch("/api/sync-user", { method: "POST" });
-      router.push("/dashboard");
+      router.push("/");
     };
     syncUser();
   }, [router]);
