@@ -7,6 +7,8 @@ const adminSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     role: { type: String, default: "admin" },
 
+    ipAddress: { type: String }, // ✅ added this line
+
     permissions: {
       canAddTasks: { type: Boolean, default: true },
       canViewReports: { type: Boolean, default: true },

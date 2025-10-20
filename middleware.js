@@ -1,30 +1,31 @@
-import { clerkMiddleware, getAuth, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher([
   "/admin(.*)",
   "/student(.*)",
-  "/api/(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = getAuth(req);
+export default clerkMiddleware((auth, req) => {
+  const { userId, sessionClaims } = auth();
+  const path = req.nextUrl.pathname;
 
-  // Protect unauthenticated users
-  if (isProtectedRoute(req) && !userId) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+  // Allow homepage, API routes, post-auth route
+  if (path === "/" || path.startsWith("/api") || path.startsWith("/post-auth")) {
+    return NextResponse.next();
   }
 
-  // Role-based routing
+  // Require authentication for protected routes
+  if (isProtectedRoute(req) && !userId) {
+    return NextResponse.redirect(new URL("/", req.url)); // redirect to home (modal login)
+  }
+
+  // Role-based redirect logic
   if (userId && isProtectedRoute(req)) {
-    // Try both possible Clerk fields
     const role =
       sessionClaims?.metadata?.role ||
       sessionClaims?.publicMetadata?.role ||
       "student";
-
-    const path = req.nextUrl.pathname;
-console.log("➡️ Clerk Session Claims:", JSON.stringify(sessionClaims, null, 2));
 
     if (path.startsWith("/admin") && role !== "admin") {
       return NextResponse.redirect(new URL("/student", req.url));
@@ -39,8 +40,5 @@ console.log("➡️ Clerk Session Claims:", JSON.stringify(sessionClaims, null, 
 });
 
 export const config = {
-  matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|png|webp|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
-  ],
+  matcher: ["/((?!_next|.*\\..*).*)"], // exclude static files and assets
 };

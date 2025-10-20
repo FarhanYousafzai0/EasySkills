@@ -1,62 +1,110 @@
-'use client';
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { connectDB } from "@/lib/mongodb";
+import Admin from "@/app/models/Admin";
+import Student from "@/app/models/Student";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+export async function POST(req) {
+  try {
+    await connectDB();
 
+    const { userId, sessionClaims } = auth();
+    if (!userId)
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
- 
-export default function PostAuth() {
-  const router = useRouter();
-  const { user, isLoaded, isSignedIn } = useUser();
+    // ✅ Extract IP address safely (works on Vercel & localhost)
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
 
-  useEffect(() => {
-    // Wait until Clerk is ready
-    if (!isLoaded) return;
+    const email =
+      sessionClaims?.email_addresses?.[0]?.email_address ||
+      sessionClaims?.email ||
+      "unknown@user.com";
+    const fullName =
+      sessionClaims?.full_name ||
+      `${sessionClaims?.first_name || ""} ${sessionClaims?.last_name || ""}`.trim() ||
+      "Unnamed User";
 
-    const syncAndRedirect = async () => {
-      try {
-        if (!isSignedIn) {
-          router.replace('/sign-in');
-          return;
-        }
+    const role =
+      sessionClaims?.metadata?.role ||
+      sessionClaims?.publicMetadata?.role ||
+      "student";
 
-        // 1️⃣ Sync Clerk <-> MongoDB
-        const res = await fetch('/api/sync-user', { method: 'POST' });
-        const data = await res.json();
+    let userDoc;
 
-        if (!res.ok) throw new Error(data.error || 'Failed to sync user');
+    // ✅ Handle Admin
+    if (role === "admin") {
+      const existing = await Admin.findOne({ clerkId: userId });
 
-        // 2️⃣ Determine user role
-        const role =
-          data.role ||
-          user?.publicMetadata?.role ||
-          user?.unsafeMetadata?.role ||
-          'student';
-
-        // 3️⃣ Redirect based on role
-        if (role === 'admin') {
-          router.replace('/admin');
-        } else {
-          router.replace('/student');
-        }
-      } catch (err) {
-        console.error('❌ PostAuth error:', err);
-        router.replace('/sign-in');
+      // Check IP conflict
+      if (existing && existing.ipAddress && existing.ipAddress !== ip) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Access denied: this account is already logged in from another device/IP. Please log out there first.",
+          },
+          { status: 403 }
+        );
       }
-    };
 
-    syncAndRedirect();
-  }, [isLoaded, isSignedIn, router, user]);
+      userDoc = await Admin.findOneAndUpdate(
+        { clerkId: userId },
+        {
+          clerkId: userId,
+          fullName,
+          email,
+          role: "admin",
+          ipAddress: ip, // ✅ store IP
+          lastLogin: new Date(),
+        },
+        { upsert: true, new: true }
+      );
+    }
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center">
-      <h2 className="text-xl font-semibold text-gray-700">
-        Syncing your account...
-      </h2>
-      <p className="text-sm text-gray-500 mt-2">
-        Please wait while we prepare your dashboard.
-      </p>
-    </div>
-  );
+    // ✅ Handle Student
+    else {
+      const existing = await Student.findOne({ clerkId: userId });
+
+      if (existing && existing.ipAddress && existing.ipAddress !== ip) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Access denied: this account is already logged in from another IP address.",
+          },
+          { status: 403 }
+        );
+      }
+
+      userDoc = await Student.findOneAndUpdate(
+        { clerkId: userId },
+        {
+          clerkId: userId,
+          fullName,
+          email,
+          batch: "Unassigned",
+          ipAddress: ip, // ✅ store IP
+          lastLogin: new Date(),
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "User synced successfully",
+        role: userDoc.role || role,
+        ip: userDoc.ipAddress,
+        data: userDoc,
+      },
+      { status: 200 }
+    );
+  } catch (err) {
+    console.error("❌ Sync user error:", err);
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
 }
