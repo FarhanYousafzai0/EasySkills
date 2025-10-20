@@ -16,7 +16,6 @@ export default function PostAuth() {
 
     const syncAndRedirect = async () => {
       try {
-        // If user somehow lands here while not signed in
         if (!isSignedIn) {
           router.replace('/sign-in');
           return;
