@@ -1,13 +1,52 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useUser, useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Admin/Sidebar';
 import Navbar from '@/components/Admin/Nav';
 
 export default function AdminLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isSignedIn, isLoaded, user } = useUser();
+  const router = useRouter();
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (!isSignedIn) {
+        router.push('/');
+        return;
+      }
+      
+      const role = user?.publicMetadata?.role || user?.metadata?.role;
+      if (role !== 'admin') {
+        router.push('/student');
+        return;
+      }
+    }
+  }, [isLoaded, isSignedIn, user, router]);
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return null; // Will redirect
+  }
+
+  const role = user?.publicMetadata?.role || user?.metadata?.role;
+  if (role !== 'admin') {
+    return null; // Will redirect
+  }
 
   return (
     <div className="flex w-full h-screen overflow-hidden">

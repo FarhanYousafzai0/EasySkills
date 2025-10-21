@@ -1,4 +1,4 @@
-import Footer from "@/components/Footer";
+import Footer from "@/components/User/Footer";
 import Nav from "@/components/Nav";
 import WhatsAppButton from "@/components/WhatsAppButton";
 

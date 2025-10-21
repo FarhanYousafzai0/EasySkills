@@ -1,32 +1,43 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-export default function PostAuth() {
-  const router = useRouter();
-  const [message, setMessage] = useState("Syncing your account...");
+const isProtectedRoute = createRouteMatcher([
+  "/admin(.*)",
+  "/student(.*)",
+  "/api/(.*)",
+]);
 
-  useEffect(() => {
-    const syncUser = async () => {
-      try {
-        const res = await fetch("/api/sync-user", { method: "POST" });
-        const data = await res.json();
+export default clerkMiddleware(async (auth, req) => {
+  const { userId, sessionClaims } = auth; // ✅ correct way
 
-        if (!res.ok) {
-          setMessage(data.message || "Login blocked. Please try again later.");
-          return;
-        }
+  if (isProtectedRoute(req) && !userId) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
 
-        setMessage("Redirecting to your dashboard...");
-        router.push(data.role === "admin" ? "/admin" : "/student");
-      } catch (err) {
-        console.error("Sync error:", err);
-        setMessage("Something went wrong.");
-      }
-    };
+  if (userId && isProtectedRoute(req)) {
+    const role =
+      sessionClaims?.role ||
+      sessionClaims?.publicMetadata?.role ||
+      sessionClaims?.metadata?.role ||
+      "student";
 
-    syncUser();
-  }, [router]);
+    const path = req.nextUrl.pathname;
 
-  return <p className="text-center mt-10">{message}</p>;
-}
+    if (path.startsWith("/admin") && role !== "admin") {
+      return NextResponse.redirect(new URL("/student", req.url));
+    }
+
+    if (path.startsWith("/student") && role !== "student") {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+  }
+
+  return NextResponse.next();
+});
+
+export const config = {
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpg|jpeg|png|webp|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
+};

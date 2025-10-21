@@ -6,6 +6,7 @@ const studentSchema = new mongoose.Schema(
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     batch: { type: String, required: true },
+    role: { type: String, default: "student" }, // ✅ Add role field
 
     ipAddress: { type: String }, // ✅ added this line
 
