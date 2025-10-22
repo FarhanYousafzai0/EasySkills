@@ -3,64 +3,41 @@ import { connectDB } from "@/lib/mongodb";
 import Task from "@/app/models/Task";
 import LiveSession from "@/app/models/LiveSession";
 
-export async function POST(req) {
+// ✅ Get all Tasks & Live Sessions (merged)
+export async function GET() {
   try {
     await connectDB();
-    const data = await req.json();
 
-    if (data.kind === "task") {
-      const newTask = await Task.create({
-        title: data.title,
-        description: data.description,
-        dueDate: data.dueDate,
-        priority: data.priority,
-        tags: data.tags,
-        batches: data.batches,
-        status: data.status || "active",
-      });
+    const tasks = await Task.find().lean();
+    const sessions = await LiveSession.find().lean();
 
-      return NextResponse.json({ success: true, type: "task", data: newTask });
-    }
+    const formatted = [
+      ...tasks.map((t) => ({
+        id: t._id,
+        kind: "task",
+        title: t.title,
+        due: t.dueDate,
+        batch: t.batches,
+        status: t.status,
+      })),
+      ...sessions.map((s) => ({
+        id: s._id,
+        kind: "live",
+        topic: s.topic,
+        date: s.date,
+        time: s.time,
+        batch: s.batch,
+        recurring: s.recurringWeekly,
+        status: s.status,
+      })),
+    ];
 
-    if (data.kind === "live") {
-      const newSession = await LiveSession.create({
-        topic: data.topic,
-        batch: data.batch,
-        date: data.date,
-        time: data.time,
-        recurringWeekly: data.recurringWeekly || false,
-        meetingLink: data.meetingLink,
-        notes: data.notes,
-        status: data.status || "scheduled",
-      });
-
-      // 🌀 If recurring weekly, auto-generate next 4 weeks
-      if (data.recurringWeekly) {
-        const baseDate = new Date(data.date);
-        const futureSessions = [];
-        for (let i = 1; i <= 4; i++) {
-          const next = new Date(baseDate);
-          next.setDate(next.getDate() + 7 * i);
-          futureSessions.push({
-            topic: data.topic,
-            batch: data.batch,
-            date: next.toISOString().split("T")[0],
-            time: data.time,
-            recurringWeekly: true,
-            meetingLink: data.meetingLink,
-            notes: data.notes,
-            status: "scheduled",
-          });
-        }
-        await LiveSession.insertMany(futureSessions);
-      }
-
-      return NextResponse.json({ success: true, type: "live", data: newSession });
-    }
-
-    return NextResponse.json({ success: false, message: "Invalid kind" }, { status: 400 });
+    return NextResponse.json({ success: true, data: formatted });
   } catch (err) {
-    console.error("❌ Error:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    console.error("Error fetching items:", err);
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }

@@ -10,7 +10,7 @@ const LiveSessionSchema = new mongoose.Schema({
   meetingLink: String,
   notes: String,
   status: { type: String, enum: ["scheduled", "completed", "cancelled"], default: "scheduled" },
-  createdBy: { type: String, required: true },
+  createdBy: { type: String, required: false,default:"system" },
 }, { timestamps: true });
 
 export default mongoose.models.LiveSession || mongoose.model("LiveSession", LiveSessionSchema);
