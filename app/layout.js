@@ -2,6 +2,7 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import Nav from "@/components/Nav";
+import { Toaster } from "@/components/ui/sonner";
 
 // Add Poppins as a cool and modern font
 const poppins = Poppins({
@@ -35,7 +36,7 @@ export default function RootLayout({ children }) {
         >
           
           {children}
-         
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

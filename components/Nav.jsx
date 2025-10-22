@@ -127,7 +127,7 @@ const Nav = () => {
                       </span>
                     </>
                   ) : (
-                    <SignInButton aftersigninurl="/post-auth" mode="modal">
+                    <SignInButton afterSignInUrl="/post-auth" mode="modal">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         className="px-6 py-2.5 cursor-pointer shadow-md text-white bg-gradient-to-r from-[#9380FD] to-[#7866FA] rounded-md text-[15px] font-medium transition-all duration-300 hover:shadow-md hover:translate-x-2"
@@ -248,7 +248,7 @@ const Nav = () => {
                       </span>
                     </div>
                   ) : (
-                    <SignInButton aftersigninurl="/post-auth" mode="modal">
+                    <SignInButton afterSignInUrl="/post-auth" mode="modal">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         className="w-full px-6 py-3 cursor-pointer bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white rounded-md font-medium text-[15px] transition-all duration-300 hover:bg-gray-800 shadow-md"

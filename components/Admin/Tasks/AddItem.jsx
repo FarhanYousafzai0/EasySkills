@@ -1,16 +1,16 @@
 'use client';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from "sonner";
 import {
-  Calendar, Clock3, Hash, Tag, Layers, Users, Plus, Repeat,
-  Video, FileText, CheckCircle2
+  Calendar, Clock3, Tag, Layers, Plus, Repeat, Video, FileText
 } from 'lucide-react';
 
 const batches = ['Batch 1', 'Batch 2', 'Batch 3'];
 const priorities = ['Low', 'Medium', 'High'];
 
-export default function AddItem() {
-  const [type, setType] = useState('task'); // 'task' | 'live'
+export default function AddItem({ onAdd }) {
+  const [type, setType] = useState('task');
   const [loading, setLoading] = useState(false);
 
   const [taskForm, setTaskForm] = useState({
@@ -23,18 +23,18 @@ export default function AddItem() {
     recurringWeekly: false, meetingLink: '', notes: '',
   });
 
-  // default dates
+  // Default date setup
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     setTaskForm((p) => ({ ...p, dueDate: p.dueDate || today }));
     setLiveForm((p) => ({ ...p, date: p.date || today }));
   }, []);
 
-  const handleSubmit = (e) => {
+  // 🧠 Handle Submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    // Build a payload that’s backend-friendly
     const payload =
       type === 'task'
         ? {
@@ -59,14 +59,30 @@ export default function AddItem() {
             status: 'scheduled',
           };
 
-    // replace later with fetch('/api/...', {method:'POST', body: JSON.stringify(payload)})
-    setTimeout(() => {
+    try {
+      const res = await fetch('http://localhost:3000/api/admin/add-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success(`${data.type === 'task' ? 'Task' : 'Live Session'} created successfully!`);
+        onAdd?.(data.data);
+
+        // Reset form
+        setTaskForm({ title: '', description: '', dueDate: '', priority: 'Medium', tags: '', batches: [] });
+        setLiveForm({ topic: '', batch: '', date: '', time: '', recurringWeekly: false, meetingLink: '', notes: '' });
+      } else {
+        throw new Error(data.message || 'Something went wrong.');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to add item. Please try again.');
+    } finally {
       setLoading(false);
-      alert(`Saved ${payload.kind} successfully!`);
-      // reset
-      setTaskForm({ title: '', description: '', dueDate: '', priority: 'Medium', tags: '', batches: [] });
-      setLiveForm({ topic: '', batch: '', date: '', time: '', recurringWeekly: false, meetingLink: '', notes: '' });
-    }, 900);
+    }
   };
 
   return (
@@ -83,235 +99,33 @@ export default function AddItem() {
 
         {/* Type Switch */}
         <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
-          <button
-            onClick={() => setType('task')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              type === 'task'
-                ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-                : 'text-gray-700'
-            }`}
-          >
-            Task
-          </button>
-          <button
-            onClick={() => setType('live')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              type === 'live'
-                ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-                : 'text-gray-700'
-            }`}
-          >
-            Live Session
-          </button>
+          {['task', 'live'].map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                type === t
+                  ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
+                  : 'text-gray-700'
+              }`}
+            >
+              {t === 'task' ? 'Task' : 'Live Session'}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* TASK FORM */}
         <AnimatePresence mode="wait">
-          {type === 'task' && (
-            <motion.div
-              key="task-form"
-              className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-            >
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Title</label>
-                <input
-                  value={taskForm.title}
-                  onChange={(e)=>setTaskForm({...taskForm, title:e.target.value})}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                  placeholder="e.g., Week 2: ML Worksheet"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-[#9380FD]" /> Due Date
-                </label>
-                <input
-                  type="date"
-                  value={taskForm.dueDate}
-                  onChange={(e)=>setTaskForm({...taskForm, dueDate:e.target.value})}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm text-gray-700 mb-1">Description</label>
-                <textarea
-                  rows="3"
-                  value={taskForm.description}
-                  onChange={(e)=>setTaskForm({...taskForm, description:e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                  placeholder="Describe the task, requirements, resources..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Priority</label>
-                <select
-                  value={taskForm.priority}
-                  onChange={(e)=>setTaskForm({...taskForm, priority:e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:border-[#9380FD]"
-                >
-                  {priorities.map(p=><option key={p}>{p}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1 flex items-center gap-1">
-                  <Tag className="h-4 w-4 text-[#9380FD]" /> Tags (comma-separated)
-                </label>
-                <input
-                  value={taskForm.tags}
-                  onChange={(e)=>setTaskForm({...taskForm, tags:e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                  placeholder="ml, worksheet, supervised"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm text-gray-700 mb-2 flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-[#9380FD]" /> Assign to Batches
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {batches.map((b)=> {
-                    const active = taskForm.batches.includes(b);
-                    return (
-                      <button
-                        type="button"
-                        key={b}
-                        onClick={()=>{
-                          setTaskForm((prev)=>{
-                            const set = new Set(prev.batches);
-                            active ? set.delete(b) : set.add(b);
-                            return {...prev, batches:[...set]};
-                          });
-                        }}
-                        className={`px-3 py-1 rounded-lg text-sm border ${
-                          active
-                            ? 'border-transparent bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-                            : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* LIVE FORM */}
-          {type === 'live' && (
-            <motion.div
-              key="live-form"
-              className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-            >
-              <div>
-                <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">
-                  <Video className="h-4 w-4 text-[#9380FD]" /> Topic
-                </label>
-                <input
-                  value={liveForm.topic}
-                  onChange={(e)=>setLiveForm({...liveForm, topic:e.target.value})}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                  placeholder="e.g., CNNs & Transfer Learning"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">
-                  Batch
-                </label>
-                <select
-                  value={liveForm.batch}
-                  onChange={(e)=>setLiveForm({...liveForm, batch:e.target.value})}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:border-[#9380FD]"
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map(b=><option key={b}>{b}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-[#9380FD]" /> Date
-                </label>
-                <input
-                  type="date"
-                  value={liveForm.date}
-                  onChange={(e)=>setLiveForm({...liveForm, date:e.target.value})}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">
-                  <Clock3 className="h-4 w-4 text-[#9380FD]" /> Time
-                </label>
-                <input
-                  type="time"
-                  value={liveForm.time}
-                  onChange={(e)=>setLiveForm({...liveForm, time:e.target.value})}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Meeting Link</label>
-                <input
-                  value={liveForm.meetingLink}
-                  onChange={(e)=>setLiveForm({...liveForm, meetingLink:e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                  placeholder="Zoom/Meet link"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  id="recurring"
-                  type="checkbox"
-                  checked={liveForm.recurringWeekly}
-                  onChange={(e)=>setLiveForm({...liveForm, recurringWeekly:e.target.checked})}
-                  className="h-4 w-4 accent-[#7866FA]"
-                />
-                <label htmlFor="recurring" className="text-sm text-gray-700 flex items-center gap-2">
-                  <Repeat className="h-4 w-4 text-[#9380FD]" />
-                  Repeat Weekly (auto-generate upcoming sessions)
-                </label>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[#9380FD]" /> Notes (optional)
-                </label>
-                <textarea
-                  rows="3"
-                  value={liveForm.notes}
-                  onChange={(e)=>setLiveForm({...liveForm, notes:e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#9380FD]"
-                  placeholder="Add agenda, resources, or exceptions (e.g., skip next week if sick)"
-                />
-              </div>
-            </motion.div>
+          {type === 'task' ? (
+            <TaskForm taskForm={taskForm} setTaskForm={setTaskForm} />
+          ) : (
+            <LiveForm liveForm={liveForm} setLiveForm={setLiveForm} />
           )}
         </AnimatePresence>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <div className="md:col-span-2 flex justify-end">
           <motion.button
             whileHover={{ scale: 1.04 }}
@@ -324,5 +138,70 @@ export default function AddItem() {
         </div>
       </form>
     </motion.div>
+  );
+}
+
+// 🧩 Task Form Component
+function TaskForm({ taskForm, setTaskForm }) {
+  return (
+    <>
+      <input
+        placeholder="Title"
+        value={taskForm.title}
+        onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+      <input
+        type="date"
+        value={taskForm.dueDate}
+        onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+      <textarea
+        rows="3"
+        placeholder="Description"
+        value={taskForm.description}
+        onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+      <input
+        placeholder="Tags (comma-separated)"
+        value={taskForm.tags}
+        onChange={(e) => setTaskForm({ ...taskForm, tags: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+    </>
+  );
+}
+
+// 🧩 Live Form Component
+function LiveForm({ liveForm, setLiveForm }) {
+  return (
+    <>
+      <input
+        placeholder="Topic"
+        value={liveForm.topic}
+        onChange={(e) => setLiveForm({ ...liveForm, topic: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+      <input
+        type="date"
+        value={liveForm.date}
+        onChange={(e) => setLiveForm({ ...liveForm, date: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+      <input
+        type="time"
+        value={liveForm.time}
+        onChange={(e) => setLiveForm({ ...liveForm, time: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+      <input
+        placeholder="Meeting Link"
+        value={liveForm.meetingLink}
+        onChange={(e) => setLiveForm({ ...liveForm, meetingLink: e.target.value })}
+        className="border rounded-lg px-4 py-2 w-full"
+      />
+    </>
   );
 }
