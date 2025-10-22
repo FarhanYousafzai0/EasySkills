@@ -10,19 +10,17 @@ const batches = ['All', 'Batch 1', 'Batch 2', 'Batch 3'];
 const types = ['All', 'Task', 'Live'];
 
 export default function AllItems() {
-  // Ensure the default value is always an array, and set only via setItems from here
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState('');
   const [batch, setBatch] = useState('All');
   const [type, setType] = useState('All');
   const [page, setPage] = useState(1);
-  const perPage = 6;
   const [loading, setLoading] = useState(false);
+  const perPage = 6;
 
-  // ✅ Fetch all items from backend
+  // ✅ Fetch all items
   useEffect(() => {
     fetchItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchItems = async () => {
@@ -30,18 +28,21 @@ export default function AllItems() {
       setLoading(true);
       const res = await fetch('/api/admin/alltask&live');
       const data = await res.json();
-      // Make sure data.items is always an array (or fallback to empty)
-      if (res.ok && data.success) setItems(Array.isArray(data.items) ? data.items : []);
-      else throw new Error(data.message || 'Failed to load data');
+
+      if (res.ok && data.success && Array.isArray(data.data)) {
+        setItems(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to fetch items');
+      }
     } catch (err) {
+      console.error(err);
       toast.error(err.message);
-      setItems([]); // On error, items is always an array
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Delete item (task or live)
+  // ✅ Delete item
   const handleDelete = async (id, kind) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
@@ -55,48 +56,53 @@ export default function AllItems() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        toast.success(`${kind === 'task' ? 'Task' : 'Live Session'} deleted!`);
-        setItems((prev) => Array.isArray(prev) ? prev.filter((i) => i._id !== id) : []);
-      } else throw new Error(data.message || 'Failed to delete');
+        toast.success(`${kind === 'task' ? 'Task' : 'Live Session'} deleted successfully!`);
+        setItems((prev) => prev.filter((item) => item.id !== id));
+      } else {
+        throw new Error(data.message || 'Failed to delete item');
+      }
     } catch (err) {
       toast.error(err.message);
     }
   };
 
-  // ✅ Update item status (quick example)
-  const handleUpdateStatus = async (id, kind, newStatus) => {
+  // ✅ Update item (toggle status)
+  const handleUpdateStatus = async (id, kind, currentStatus) => {
     try {
+      const newStatus = currentStatus === 'active' ? 'completed' : 'active';
       const url =
         kind === 'task'
           ? `/api/admin/tasks/${id}`
           : `/api/admin/livesessions/${id}`;
 
       const res = await fetch(url, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
 
       const data = await res.json();
+
       if (res.ok && data.success) {
-        toast.success(`${kind} status updated to "${newStatus}"`);
-        fetchItems(); // refresh list
-      } else throw new Error(data.message);
+        toast.success(`${kind} marked as ${newStatus}`);
+        fetchItems();
+      } else {
+        throw new Error(data.message);
+      }
     } catch (err) {
       toast.error(err.message);
     }
   };
 
-  // ✅ Filtering & Search
+  // ✅ Filter + Search
   const filtered = useMemo(() => {
-    // Defensive: items is always an array, but just in case
-    const safeItems = Array.isArray(items) ? items : [];
-    return safeItems.filter((it) => {
+    return items.filter((it) => {
       const q = query.toLowerCase();
+
       const matchesQ =
         (it.kind === 'task' && it.title?.toLowerCase().includes(q)) ||
         (it.kind === 'live' && it.topic?.toLowerCase().includes(q)) ||
-        it._id?.toLowerCase().includes(q);
+        it.id?.toLowerCase().includes(q);
 
       const matchesType =
         type === 'All' ||
@@ -105,7 +111,7 @@ export default function AllItems() {
 
       const matchesBatch =
         batch === 'All' ||
-        (it.kind === 'task' && it.batches?.includes(batch)) ||
+        (it.kind === 'task' && it.batch?.includes(batch)) ||
         (it.kind === 'live' && it.batch === batch);
 
       return matchesQ && matchesType && matchesBatch;
@@ -121,7 +127,7 @@ export default function AllItems() {
       animate={{ opacity: 1, y: 0 }}
       className="p-6 md:p-10 bg-white/70 backdrop-blur-lg border border-gray-200/50 shadow-md rounded-2xl"
     >
-      {/* Toolbar */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <ClipboardList className="text-[#9380FD]" /> All Tasks & Live Sessions
@@ -193,28 +199,26 @@ export default function AllItems() {
           >
             {paginated.map((it) => (
               <motion.div
-                key={it._id}
+                key={it.id}
                 whileHover={{ y: -3, scale: 1.01 }}
                 className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Hash className="h-4 w-4" />
-                    <span className="font-mono">{it._id}</span>
+                    <span className="font-mono">{it.id}</span>
                   </div>
                   <div className="relative group cursor-pointer">
                     <MoreVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                     <div className="absolute hidden group-hover:block top-6 right-0 bg-white shadow-md border border-gray-100 rounded-lg text-sm z-10">
                       <button
-                        onClick={() =>
-                          handleUpdateStatus(it._id, it.kind, it.status === 'active' ? 'completed' : 'active')
-                        }
+                        onClick={() => handleUpdateStatus(it.id, it.kind, it.status)}
                         className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2"
                       >
                         <Edit2 size={14} /> Toggle Status
                       </button>
                       <button
-                        onClick={() => handleDelete(it._id, it.kind)}
+                        onClick={() => handleDelete(it.id, it.kind)}
                         className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2 text-red-600"
                       >
                         <Trash2 size={14} /> Delete
@@ -229,14 +233,14 @@ export default function AllItems() {
                       {it.title}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
-                      Due: {new Date(it.dueDate).toLocaleDateString()}
+                      Due: {new Date(it.due).toLocaleDateString()}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                         Task
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {it.batches?.join(', ')}
+                        <Layers className="h-3 w-3" /> {it.batch?.join(', ')}
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 capitalize">
                         {it.status}
@@ -259,7 +263,7 @@ export default function AllItems() {
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 flex items-center gap-1">
                         <Layers className="h-3 w-3" /> {it.batch}
                       </span>
-                      {it.recurringWeekly && (
+                      {it.recurring && (
                         <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
                           Weekly
                         </span>
