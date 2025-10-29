@@ -26,7 +26,7 @@ export default function AllItems() {
         const res = await fetch('/api/admin/batches', { cache: 'no-store' });
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
-          setBatches(['All', ...data.data.map((b) => b.name)]);
+          setBatches(data.data);
         } else {
           toast.error('Failed to load batches');
         }
@@ -194,7 +194,7 @@ export default function AllItems() {
             {batchLoading ? (
               <option>Loading batches...</option>
             ) : (
-              batches.map((b) => <option key={b}>{b}</option>)
+              batches.map((b) => <option key={b}>{b.title}</option>)
             )}
           </select>
         </div>
