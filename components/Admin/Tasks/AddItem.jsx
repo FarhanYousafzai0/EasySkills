@@ -1,27 +1,57 @@
 'use client';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Calendar, Clock3, Tag, Layers, Plus, Repeat, Video, FileText
 } from 'lucide-react';
 
-const batches = ['Batch 1', 'Batch 2', 'Batch 3'];
 const priorities = ['Low', 'Medium', 'High'];
 
 export default function AddItem() {
-  const [type, setType] = useState('task'); // 'task' | 'live'
+  const [type, setType] = useState('task');
   const [loading, setLoading] = useState(false);
+  const [batches, setBatches] = useState([]);
+  const [batchLoading, setBatchLoading] = useState(true);
 
   const [taskForm, setTaskForm] = useState({
-    title: '', description: '', dueDate: '',
-    priority: 'Medium', tags: '', batches: [],
+    title: '',
+    description: '',
+    dueDate: '',
+    priority: 'Medium',
+    tags: '',
+    batches: [],
   });
 
   const [liveForm, setLiveForm] = useState({
-    topic: '', batch: '', date: '', time: '',
-    recurringWeekly: false, meetingLink: '', notes: '',
+    topic: '',
+    batch: '',
+    date: '',
+    time: '',
+    recurringWeekly: false,
+    meetingLink: '',
+    notes: '',
   });
+
+  // ✅ Fetch batches
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/batches', { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setBatches(data.data);
+        } else {
+          toast.error('Failed to load batches');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Error fetching batches');
+      } finally {
+        setBatchLoading(false);
+      }
+    })();
+  }, []);
 
   // ✅ Set default date
   useEffect(() => {
@@ -37,7 +67,6 @@ export default function AddItem() {
 
     try {
       if (type === 'task') {
-        // -------- TASK PAYLOAD --------
         const payload = {
           kind: 'task',
           title: taskForm.title,
@@ -54,14 +83,20 @@ export default function AddItem() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+
         const data = await res.json();
         if (res.ok && data.success) {
-          toast.success('✅ Task added successfully!');
-          setTaskForm({ title: '', description: '', dueDate: '', priority: 'Medium', tags: '', batches: [] });
+          toast.success(' Task added successfully!');
+          setTaskForm({
+            title: '',
+            description: '',
+            dueDate: new Date().toISOString().split('T')[0],
+            priority: 'Medium',
+            tags: '',
+            batches: [],
+          });
         } else throw new Error(data.message || 'Failed to add task.');
-
       } else {
-        // -------- LIVE SESSION PAYLOAD --------
         const basePayload = {
           kind: 'live',
           topic: liveForm.topic,
@@ -74,7 +109,6 @@ export default function AddItem() {
           status: 'scheduled',
         };
 
-        // if repeat weekly — create 4 sessions spaced one week apart
         const sessions = [basePayload];
         if (liveForm.recurringWeekly) {
           for (let i = 1; i <= 4; i++) {
@@ -84,23 +118,28 @@ export default function AddItem() {
           }
         }
 
-        // call backend for each session
-        const promises = sessions.map((s) =>
-          fetch('/api/admin/add-tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(s),
-          })
+        const results = await Promise.all(
+          sessions.map((s) =>
+            fetch('/api/admin/add-tasks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(s),
+            })
+          )
         );
 
-        const responses = await Promise.all(promises);
-        const allOK = responses.every((r) => r.ok);
-        if (allOK) toast.success(`✅ ${sessions.length} Live Session${sessions.length > 1 ? 's' : ''} created!`);
+        const allOK = results.every((r) => r.ok);
+        if (allOK) toast.success(` ${sessions.length} Live Session(s) created!`);
         else toast.error('Some sessions failed to create.');
 
         setLiveForm({
-          topic: '', batch: '', date: '', time: '',
-          recurringWeekly: false, meetingLink: '', notes: ''
+          topic: '',
+          batch: '',
+          date: new Date().toISOString().split('T')[0],
+          time: '',
+          recurringWeekly: false,
+          meetingLink: '',
+          notes: '',
         });
       }
     } catch (err) {
@@ -110,53 +149,53 @@ export default function AddItem() {
     }
   };
 
-  // ✅ UI
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       className="p-6 md:p-10 bg-white/70 backdrop-blur-lg border border-gray-200/50 shadow-md rounded-2xl"
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Plus className="text-[#9380FD]" /> Add Task / Live Session
         </h2>
-
         <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
-          <button
-            onClick={() => setType('task')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${type === 'task'
-              ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-              : 'text-gray-700'
+          {['task', 'live'].map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                type === t
+                  ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
+                  : 'text-gray-700 hover:bg-gray-200'
               }`}
-          >
-            Task
-          </button>
-          <button
-            onClick={() => setType('live')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${type === 'live'
-              ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-              : 'text-gray-700'
-              }`}
-          >
-            Live Session
-          </button>
+            >
+              {t === 'task' ? 'Task' : 'Live Session'}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AnimatePresence mode="wait">
           {type === 'task' && (
-            <TaskForm taskForm={taskForm} setTaskForm={setTaskForm} />
+            <TaskForm
+              taskForm={taskForm}
+              setTaskForm={setTaskForm}
+              batches={batches}
+              batchLoading={batchLoading}
+            />
           )}
           {type === 'live' && (
-            <LiveForm liveForm={liveForm} setLiveForm={setLiveForm} />
+            <LiveForm
+              liveForm={liveForm}
+              setLiveForm={setLiveForm}
+              batches={batches}
+              batchLoading={batchLoading}
+            />
           )}
         </AnimatePresence>
 
-        {/* Submit Button */}
         <div className="md:col-span-2 flex justify-end">
           <motion.button
             whileHover={{ scale: 1.04 }}
@@ -172,10 +211,7 @@ export default function AddItem() {
   );
 }
 
-/* -------------------------------------- */
-/* TASK FORM                              */
-/* -------------------------------------- */
-function TaskForm({ taskForm, setTaskForm }) {
+function TaskForm({ taskForm, setTaskForm, batches, batchLoading }) {
   return (
     <>
       <div>
@@ -209,7 +245,7 @@ function TaskForm({ taskForm, setTaskForm }) {
           value={taskForm.description}
           onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
           className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:border-[#9380FD]"
-          placeholder="Describe the task, requirements, resources..."
+          placeholder="Describe the task..."
         />
       </div>
 
@@ -220,7 +256,9 @@ function TaskForm({ taskForm, setTaskForm }) {
           onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
           className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:border-[#9380FD]"
         >
-          {priorities.map((p) => <option key={p}>{p}</option>)}
+          {priorities.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
         </select>
       </div>
 
@@ -240,39 +278,41 @@ function TaskForm({ taskForm, setTaskForm }) {
         <label className="block text-sm text-gray-700 mb-2 flex items-center gap-2">
           <Layers className="h-4 w-4 text-[#9380FD]" /> Assign to Batches
         </label>
-        <div className="flex flex-wrap gap-2">
-          {batches.map((b) => {
-            const active = taskForm.batches.includes(b);
-            return (
-              <button
-                type="button"
-                key={b}
-                onClick={() => {
-                  setTaskForm((prev) => {
-                    const set = new Set(prev.batches);
-                    active ? set.delete(b) : set.add(b);
-                    return { ...prev, batches: [...set] };
-                  });
-                }}
-                className={`px-3 py-1 rounded-lg text-sm border ${active
-                  ? 'border-transparent bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+        {batchLoading ? (
+          <p className="text-gray-400 text-sm">Loading batches...</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {batches.map((b) => {
+              const active = taskForm.batches.includes(b.name);
+              return (
+                <button
+                  type="button"
+                  key={b._id}
+                  onClick={() => {
+                    setTaskForm((prev) => {
+                      const set = new Set(prev.batches);
+                      active ? set.delete(b.title) : set.add(b.title);
+                      return { ...prev, batches: [...set] };
+                    });
+                  }}
+                  className={`px-3 py-1 rounded-lg text-sm border ${
+                    active
+                      ? 'border-transparent bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                   }`}
-              >
-                {b}
-              </button>
-            );
-          })}
-        </div>
+                >
+                  {b.title}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-/* -------------------------------------- */
-/* LIVE SESSION FORM                      */
-/* -------------------------------------- */
-function LiveForm({ liveForm, setLiveForm }) {
+function LiveForm({ liveForm, setLiveForm, batches, batchLoading }) {
   return (
     <>
       <div>
@@ -297,7 +337,9 @@ function LiveForm({ liveForm, setLiveForm }) {
           className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:border-[#9380FD]"
         >
           <option value="">Select Batch</option>
-          {batches.map((b) => <option key={b}>{b}</option>)}
+          {batchLoading
+            ? <option>Loading...</option>
+            : batches.map((b) => <option key={b._id}>{b.title}</option>)}
         </select>
       </div>
 

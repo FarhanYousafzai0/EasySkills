@@ -1,24 +1,45 @@
 'use client';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Search, MoreVertical, Edit2, Trash2, Layers, Calendar, Video, ClipboardList, Hash
 } from 'lucide-react';
 
-const batches = ['All', 'Batch 1', 'Batch 2', 'Batch 3'];
-const types = ['All', 'Task', 'Live'];
-
 export default function AllItems() {
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState('');
+  const [batches, setBatches] = useState(['All']);
   const [batch, setBatch] = useState('All');
   const [type, setType] = useState('All');
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const perPage = 6;
 
-  // ✅ Fetch all items
+  const types = ['All', 'Task', 'Live'];
+
+  /* ✅ Fetch all batches dynamically */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/batches', { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setBatches(['All', ...data.data.map((b) => b.name)]);
+        } else {
+          toast.error('Failed to load batches');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Error fetching batches');
+      } finally {
+        setBatchLoading(false);
+      }
+    })();
+  }, []);
+
+  /* ✅ Fetch all items (tasks + live sessions) */
   useEffect(() => {
     fetchItems();
   }, []);
@@ -26,7 +47,7 @@ export default function AllItems() {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/alltask&live');
+      const res = await fetch('/api/admin/alltask&live', { cache: 'no-store' });
       const data = await res.json();
 
       if (res.ok && data.success && Array.isArray(data.data)) {
@@ -42,7 +63,7 @@ export default function AllItems() {
     }
   };
 
-  // ✅ Delete item
+  /* ✅ Delete an item */
   const handleDelete = async (id, kind) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
@@ -57,7 +78,7 @@ export default function AllItems() {
 
       if (res.ok && data.success) {
         toast.success(`${kind === 'task' ? 'Task' : 'Live Session'} deleted successfully!`);
-        setItems((prev) => prev.filter((item) => item.id !== id));
+        setItems((prev) => prev.filter((i) => i._id !== id));
       } else {
         throw new Error(data.message || 'Failed to delete item');
       }
@@ -66,7 +87,7 @@ export default function AllItems() {
     }
   };
 
-  // ✅ Update item (toggle status)
+  /* ✅ Toggle item status */
   const handleUpdateStatus = async (id, kind, currentStatus) => {
     try {
       const newStatus = currentStatus === 'active' ? 'completed' : 'active';
@@ -86,23 +107,20 @@ export default function AllItems() {
       if (res.ok && data.success) {
         toast.success(`${kind} marked as ${newStatus}`);
         fetchItems();
-      } else {
-        throw new Error(data.message);
-      }
+      } else throw new Error(data.message);
     } catch (err) {
       toast.error(err.message);
     }
   };
 
-  // ✅ Filter + Search
+  /* ✅ Filter + Search logic */
   const filtered = useMemo(() => {
     return items.filter((it) => {
       const q = query.toLowerCase();
-
       const matchesQ =
         (it.kind === 'task' && it.title?.toLowerCase().includes(q)) ||
         (it.kind === 'live' && it.topic?.toLowerCase().includes(q)) ||
-        it.id?.toLowerCase().includes(q);
+        it._id?.toLowerCase().includes(q);
 
       const matchesType =
         type === 'All' ||
@@ -111,7 +129,7 @@ export default function AllItems() {
 
       const matchesBatch =
         batch === 'All' ||
-        (it.kind === 'task' && it.batch?.includes(batch)) ||
+        (it.kind === 'task' && it.batches?.includes(batch)) ||
         (it.kind === 'live' && it.batch === batch);
 
       return matchesQ && matchesType && matchesBatch;
@@ -121,6 +139,7 @@ export default function AllItems() {
   const total = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
+  /* ✅ UI */
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -132,7 +151,9 @@ export default function AllItems() {
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <ClipboardList className="text-[#9380FD]" /> All Tasks & Live Sessions
         </h2>
+
         <div className="flex flex-wrap gap-3">
+          {/* Search Bar */}
           <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
             <Search className="text-gray-500 mr-2" size={18} />
             <input
@@ -145,6 +166,8 @@ export default function AllItems() {
               className="bg-transparent outline-none text-sm w-48"
             />
           </div>
+
+          {/* Type Filter */}
           <select
             value={type}
             onChange={(e) => {
@@ -157,17 +180,22 @@ export default function AllItems() {
               <option key={t}>{t}</option>
             ))}
           </select>
+
+          {/* Batch Filter */}
           <select
             value={batch}
             onChange={(e) => {
               setBatch(e.target.value);
               setPage(1);
             }}
+            disabled={batchLoading}
             className="bg-gray-100 rounded-lg px-3 py-2 text-sm"
           >
-            {batches.map((b) => (
-              <option key={b}>{b}</option>
-            ))}
+            {batchLoading ? (
+              <option>Loading batches...</option>
+            ) : (
+              batches.map((b) => <option key={b}>{b}</option>)
+            )}
           </select>
         </div>
       </div>
@@ -199,26 +227,27 @@ export default function AllItems() {
           >
             {paginated.map((it) => (
               <motion.div
-                key={it.id}
+                key={it._id}
                 whileHover={{ y: -3, scale: 1.01 }}
                 className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Hash className="h-4 w-4" />
-                    <span className="font-mono">{it.id}</span>
+                    <span className="font-mono">{it._id}</span>
                   </div>
+
                   <div className="relative group cursor-pointer">
                     <MoreVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                     <div className="absolute hidden group-hover:block top-6 right-0 bg-white shadow-md border border-gray-100 rounded-lg text-sm z-10">
                       <button
-                        onClick={() => handleUpdateStatus(it.id, it.kind, it.status)}
+                        onClick={() => handleUpdateStatus(it._id, it.kind, it.status)}
                         className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2"
                       >
                         <Edit2 size={14} /> Toggle Status
                       </button>
                       <button
-                        onClick={() => handleDelete(it.id, it.kind)}
+                        onClick={() => handleDelete(it._id, it.kind)}
                         className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2 text-red-600"
                       >
                         <Trash2 size={14} /> Delete
@@ -229,18 +258,16 @@ export default function AllItems() {
 
                 {it.kind === 'task' ? (
                   <>
-                    <h3 className="mt-2 text-lg font-semibold text-gray-900">
-                      {it.title}
-                    </h3>
+                    <h3 className="mt-2 text-lg font-semibold text-gray-900">{it.title}</h3>
                     <p className="mt-1 text-sm text-gray-600">
-                      Due: {new Date(it.due).toLocaleDateString()}
+                      Due: {new Date(it.dueDate).toLocaleDateString()}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                         Task
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {it.batch?.join(', ')}
+                        <Layers className="h-3 w-3" /> {it.batches?.join(', ') || '—'}
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 capitalize">
                         {it.status}
@@ -253,7 +280,7 @@ export default function AllItems() {
                       <Video className="h-5 w-5 text-[#9380FD]" /> {it.topic}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />{' '}
+                      <Calendar className="h-4 w-4" />
                       {new Date(it.date).toLocaleDateString()} — {it.time}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -261,9 +288,9 @@ export default function AllItems() {
                         Live
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {it.batch}
+                        <Layers className="h-3 w-3" /> {it.batch || '—'}
                       </span>
-                      {it.recurring && (
+                      {it.recurringWeekly && (
                         <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
                           Weekly
                         </span>
