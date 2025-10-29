@@ -1,33 +1,57 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { DayPicker } from 'react-day-picker'
-import 'react-day-picker/dist/style.css'
-import { motion } from 'framer-motion'
-import { Calendar, Layers } from 'lucide-react'
+import React, { useState } from 'react';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { motion } from 'framer-motion';
+import { Calendar, Layers } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AddBatch() {
-  const [selectedRange, setSelectedRange] = useState()
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [selectedRange, setSelectedRange] = useState();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!title || !selectedRange) return alert('Please fill out all required fields!')
-    console.log({
-      title,
-      description,
-      startDate: selectedRange?.from,
-      endDate: selectedRange?.to,
-    })
-    alert('Batch Created Successfully 🎉')
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !selectedRange?.from || !selectedRange?.to) {
+      toast.error('Please fill out Title and select a Start/End date.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await fetch('/api/admin/batches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          startDate: selectedRange.from.toISOString(),
+          endDate: selectedRange.to.toISOString(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.message || 'Failed to create batch.');
+
+      toast.success('Batch created successfully 🎉');
+      setTitle('');
+      setDescription('');
+      setSelectedRange(undefined);
+    } catch (err) {
+      toast.error(err.message || 'Something went wrong while creating the batch.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleReset = () => {
-    setTitle('')
-    setDescription('')
-    setSelectedRange(undefined)
-  }
+    setTitle('');
+    setDescription('');
+    setSelectedRange(undefined);
+  };
 
   return (
     <motion.section
@@ -69,9 +93,10 @@ export default function AddBatch() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               type="submit"
-              className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white px-6 py-2.5 rounded-md font-medium shadow-md hover:opacity-90 cursor-pointer"
+              disabled={submitting}
+              className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white px-6 py-2.5 rounded-md font-medium shadow-md hover:opacity-90 cursor-pointer disabled:opacity-60"
             >
-              Create Batch
+              {submitting ? 'Creating…' : 'Create Batch'}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -106,11 +131,13 @@ export default function AddBatch() {
           {selectedRange?.from && (
             <div className="mt-4 text-sm text-gray-600">
               <p>
-                Start: <span className="font-medium text-gray-800">{selectedRange.from.toDateString()}</span>
+                Start:{' '}
+                <span className="font-medium text-gray-800">{selectedRange.from.toDateString()}</span>
               </p>
               {selectedRange?.to && (
                 <p>
-                  End: <span className="font-medium text-gray-800">{selectedRange.to.toDateString()}</span>
+                  End:{' '}
+                  <span className="font-medium text-gray-800">{selectedRange.to.toDateString()}</span>
                 </p>
               )}
             </div>
@@ -118,5 +145,5 @@ export default function AddBatch() {
         </div>
       </form>
     </motion.section>
-  )
+  );
 }

@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
 import Batch from "@/app/models/Batch";
+import { connectDB } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+
+
 
 export async function POST(req) {
   try {
