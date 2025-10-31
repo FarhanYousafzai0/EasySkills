@@ -1,45 +1,54 @@
-'use client';
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+"use client";
+import React, { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
-  Search, MoreVertical, Edit2, Trash2, Layers, Calendar, Video, ClipboardList, Hash
-} from 'lucide-react';
+  Search,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Layers,
+  Calendar,
+  Video,
+  ClipboardList,
+  Hash,
+} from "lucide-react";
 
 export default function AllItems() {
   const [items, setItems] = useState([]);
-  const [query, setQuery] = useState('');
-  const [batches, setBatches] = useState(['All']);
-  const [batch, setBatch] = useState('All');
-  const [type, setType] = useState('All');
+  const [query, setQuery] = useState("");
+  const [batches, setBatches] = useState(["All"]);
+  const [batch, setBatch] = useState("All");
+  const [type, setType] = useState("All");
   const [loading, setLoading] = useState(false);
   const [batchLoading, setBatchLoading] = useState(true);
   const [page, setPage] = useState(1);
   const perPage = 6;
 
-  const types = ['All', 'Task', 'Live'];
+  const types = ["All", "Task", "Live"];
 
   /* ✅ Fetch all batches dynamically */
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/admin/batches', { cache: 'no-store' });
+        const res = await fetch("/api/admin/batches", { cache: "no-store" });
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
-          setBatches(data.data);
+          const batchNames = data.data.map((b) => b.title || b.name || b);
+          setBatches(["All", ...batchNames]);
         } else {
-          toast.error('Failed to load batches');
+          toast.error("Failed to load batches");
         }
       } catch (err) {
         console.error(err);
-        toast.error('Error fetching batches');
+        toast.error("Error fetching batches");
       } finally {
         setBatchLoading(false);
       }
     })();
   }, []);
 
-  /* ✅ Fetch all items (tasks + live sessions) */
+  /* ✅ Fetch all items */
   useEffect(() => {
     fetchItems();
   }, []);
@@ -47,13 +56,13 @@ export default function AllItems() {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/alltask&live', { cache: 'no-store' });
+      const res = await fetch("/api/admin/alltask&live", { cache: "no-store" });
       const data = await res.json();
 
       if (res.ok && data.success && Array.isArray(data.data)) {
         setItems(data.data);
       } else {
-        throw new Error(data.message || 'Failed to fetch items');
+        throw new Error(data.message || "Failed to fetch items");
       }
     } catch (err) {
       console.error(err);
@@ -63,42 +72,53 @@ export default function AllItems() {
     }
   };
 
-  /* ✅ Delete an item */
-  const handleDelete = async (id, kind) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+  /* ✅ Delete with confirmation modal (Sonner) */
+  const handleDelete = (id, kind) => {
+    toast.message("Confirm Deletion", {
+      description: `Are you sure you want to delete this ${kind === "task" ? "Task" : "Live Session"}?`,
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const url =
+              kind === "task"
+                ? `/api/admin/tasks/${id}`
+                : `/api/admin/livesessions/${id}`;
 
-    try {
-      const url =
-        kind === 'task'
-          ? `/api/admin/tasks/${id}`
-          : `/api/admin/livesessions/${id}`;
+            const res = await fetch(url, { method: "DELETE" });
+            const data = await res.json();
 
-      const res = await fetch(url, { method: 'DELETE' });
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        toast.success(`${kind === 'task' ? 'Task' : 'Live Session'} deleted successfully!`);
-        setItems((prev) => prev.filter((i) => i._id !== id));
-      } else {
-        throw new Error(data.message || 'Failed to delete item');
-      }
-    } catch (err) {
-      toast.error(err.message);
-    }
+            if (res.ok && data.success) {
+              setItems((prev) => prev.filter((i) => i.id !== id));
+              toast.success(
+                `${kind === "task" ? "Task" : "Live Session"} deleted successfully!`
+              );
+            } else {
+              throw new Error(data.message || "Failed to delete item");
+            }
+          } catch (err) {
+            toast.error(err.message);
+          }
+        },
+      },
+    });
   };
 
   /* ✅ Toggle item status */
   const handleUpdateStatus = async (id, kind, currentStatus) => {
     try {
-      const newStatus = currentStatus === 'active' ? 'completed' : 'active';
+      const newStatus =
+        currentStatus === "active" || currentStatus === "scheduled"
+          ? "completed"
+          : "scheduled";
       const url =
-        kind === 'task'
+        kind === "task"
           ? `/api/admin/tasks/${id}`
           : `/api/admin/livesessions/${id}`;
 
       const res = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -106,7 +126,11 @@ export default function AllItems() {
 
       if (res.ok && data.success) {
         toast.success(`${kind} marked as ${newStatus}`);
-        fetchItems();
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === id ? { ...i, status: newStatus } : i
+          )
+        );
       } else throw new Error(data.message);
     } catch (err) {
       toast.error(err.message);
@@ -118,19 +142,19 @@ export default function AllItems() {
     return items.filter((it) => {
       const q = query.toLowerCase();
       const matchesQ =
-        (it.kind === 'task' && it.title?.toLowerCase().includes(q)) ||
-        (it.kind === 'live' && it.topic?.toLowerCase().includes(q)) ||
-        it._id?.toLowerCase().includes(q);
+        (it.kind === "task" && it.title?.toLowerCase().includes(q)) ||
+        (it.kind === "live" && it.topic?.toLowerCase().includes(q)) ||
+        it.id?.toLowerCase().includes(q);
 
       const matchesType =
-        type === 'All' ||
-        (type === 'Task' && it.kind === 'task') ||
-        (type === 'Live' && it.kind === 'live');
+        type === "All" ||
+        (type === "Task" && it.kind === "task") ||
+        (type === "Live" && it.kind === "live");
 
       const matchesBatch =
-        batch === 'All' ||
-        (it.kind === 'task' && it.batches?.includes(batch)) ||
-        (it.kind === 'live' && it.batch === batch);
+        batch === "All" ||
+        (it.kind === "task" && it.batch?.includes(batch)) ||
+        (it.kind === "live" && it.batch === batch);
 
       return matchesQ && matchesType && matchesBatch;
     });
@@ -153,7 +177,7 @@ export default function AllItems() {
         </h2>
 
         <div className="flex flex-wrap gap-3">
-          {/* Search Bar */}
+          {/* Search */}
           <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
             <Search className="text-gray-500 mr-2" size={18} />
             <input
@@ -194,13 +218,17 @@ export default function AllItems() {
             {batchLoading ? (
               <option>Loading batches...</option>
             ) : (
-              batches.map((b) => <option key={b}>{b.title}</option>)
+              batches.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))
             )}
           </select>
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Items Grid */}
       <AnimatePresence>
         {loading ? (
           <motion.p
@@ -227,27 +255,29 @@ export default function AllItems() {
           >
             {paginated.map((it) => (
               <motion.div
-                key={it._id}
+                key={it.id}
                 whileHover={{ y: -3, scale: 1.01 }}
                 className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Hash className="h-4 w-4" />
-                    <span className="font-mono">{it._id}</span>
+                    <span className="font-mono">{it.id}</span>
                   </div>
 
                   <div className="relative group cursor-pointer">
                     <MoreVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                     <div className="absolute hidden group-hover:block top-6 right-0 bg-white shadow-md border border-gray-100 rounded-lg text-sm z-10">
                       <button
-                        onClick={() => handleUpdateStatus(it._id, it.kind, it.status)}
+                        onClick={() =>
+                          handleUpdateStatus(it.id, it.kind, it.status)
+                        }
                         className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2"
                       >
                         <Edit2 size={14} /> Toggle Status
                       </button>
                       <button
-                        onClick={() => handleDelete(it._id, it.kind)}
+                        onClick={() => handleDelete(it.id, it.kind)}
                         className="px-4 py-2 hover:bg-gray-50 w-full text-left flex items-center gap-2 text-red-600"
                       >
                         <Trash2 size={14} /> Delete
@@ -256,18 +286,21 @@ export default function AllItems() {
                   </div>
                 </div>
 
-                {it.kind === 'task' ? (
+                {it.kind === "task" ? (
                   <>
-                    <h3 className="mt-2 text-lg font-semibold text-gray-900">{it.title}</h3>
+                    <h3 className="mt-2 text-lg font-semibold text-gray-900">
+                      {it.title}
+                    </h3>
                     <p className="mt-1 text-sm text-gray-600">
-                      Due: {new Date(it.dueDate).toLocaleDateString()}
+                      Due: {new Date(it.due).toLocaleDateString()}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                         Task
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {it.batches?.join(', ') || '—'}
+                        <Layers className="h-3 w-3" />{" "}
+                        {it.batch?.join(", ") || "—"}
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 capitalize">
                         {it.status}
@@ -280,7 +313,7 @@ export default function AllItems() {
                       <Video className="h-5 w-5 text-[#9380FD]" /> {it.topic}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="h-4 w-4" />{" "}
                       {new Date(it.date).toLocaleDateString()} — {it.time}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -288,9 +321,9 @@ export default function AllItems() {
                         Live
                       </span>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {it.batch || '—'}
+                        <Layers className="h-3 w-3" /> {it.batch || "—"}
                       </span>
-                      {it.recurringWeekly && (
+                      {it.recurring && (
                         <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
                           Weekly
                         </span>

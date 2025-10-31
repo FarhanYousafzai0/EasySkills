@@ -6,7 +6,7 @@ import Task from "@/app/models/Task";
 export async function DELETE(req, { params }) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     const deleted = await Task.findByIdAndDelete(id);
 
     if (!deleted)
@@ -19,7 +19,7 @@ export async function DELETE(req, { params }) {
   }
 }
 
-// ✅ Update (optional)
+
 export async function PUT(req, { params }) {
   try {
     await connectDB();
