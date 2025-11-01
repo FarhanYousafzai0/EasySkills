@@ -252,11 +252,7 @@ export default function Dashboard() {
             Real-time overview of activity, sessions, and progress.
           </p>
         </div>
-        <select className="mt-4 md:mt-0 bg-white border text-gray-700 rounded-lg px-4 py-2 shadow-sm cursor-pointer">
-          <option>This Month</option>
-          <option>Last Month</option>
-          <option>This Year</option>
-        </select>
+        
       </div>
 
       {/* Upcoming Live Session */}

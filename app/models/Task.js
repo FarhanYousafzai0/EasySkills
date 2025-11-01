@@ -8,7 +8,7 @@ const TaskSchema = new mongoose.Schema({
   tags: [String],
   batches: [String],
   status: { type: String, default: "active" },
-  createdBy: { type: String, default: "system", required: false }, // 👈 now optional
+  createdBy: { type: String, default: "system", required: false }, 
 }, { timestamps: true });
 
 export default mongoose.models.Task || mongoose.model("Task", TaskSchema);

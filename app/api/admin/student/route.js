@@ -8,6 +8,7 @@ export async function POST(req) {
     const body = await req.json();
     const { name, email, phone, plan, batch, joinDate, notes } = body;
 
+    // ✅ Validation
     if (!name || !email || !plan || !joinDate) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -15,7 +16,7 @@ export async function POST(req) {
       );
     }
 
-    // 1️⃣ Check if already exists
+    // ✅ Check existing Mongo record
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
       return NextResponse.json(
@@ -24,7 +25,7 @@ export async function POST(req) {
       );
     }
 
-    // 2️⃣ Calculate mentorship period
+    // ✅ Calculate mentorship details
     const join = new Date(joinDate);
     const duration = plan === "1-on-1 Mentorship" ? 30 : 45;
     const mentorshipStart = join;
@@ -36,7 +37,10 @@ export async function POST(req) {
       Math.ceil((mentorshipEnd - new Date()) / (1000 * 60 * 60 * 24))
     );
 
-    // 3️⃣ Create Clerk user
+    let clerkUserId = null;
+    let invitationLink = "";
+
+    // ✅ 1️⃣ Try to create user in Clerk
     const clerkResponse = await fetch("https://api.clerk.dev/v1/users", {
       method: "POST",
       headers: {
@@ -63,25 +67,66 @@ export async function POST(req) {
     });
 
     const clerkUser = await clerkResponse.json();
-    if (!clerkResponse.ok || !clerkUser.id)
+
+    if (clerkResponse.ok && clerkUser.id) {
+      clerkUserId = clerkUser.id;
+      console.log("✅ Clerk user created:", clerkUser.id);
+    } else if (
+      clerkUser.errors?.[0]?.code === "form_identifier_exists" ||
+      clerkUser.errors?.[0]?.message?.includes("taken")
+    ) {
+      // 🔁 Fetch existing user instead
+      const existing = await fetch(
+        `https://api.clerk.dev/v1/users?email_address=${encodeURIComponent(email)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await existing.json();
+      if (Array.isArray(data) && data.length > 0) {
+        clerkUserId = data[0].id;
+        console.log("ℹ️ Clerk user already exists:", clerkUserId);
+      } else {
+        throw new Error("Failed to fetch existing Clerk user.");
+      }
+    } else {
+      console.error("❌ Clerk user creation failed:", clerkUser);
       throw new Error("Failed to create user in Clerk");
+    }
 
-    // 4️⃣ Send email invitation
-    await fetch("https://api.clerk.dev/v1/invitations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email_address: email,
-        redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
-      }),
-    });
+    // ✅ 2️⃣ Attempt invitation (only if new user was created)
+    if (clerkResponse.ok && clerkUser.id) {
+      try {
+        const inviteResponse = await fetch("https://api.clerk.dev/v1/invitations", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email_address: email,
+            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
+          }),
+        });
 
-    // 5️⃣ Save to MongoDB
+        const inviteData = await inviteResponse.json();
+        if (inviteResponse.ok) {
+          invitationLink = inviteData.url || "";
+          console.log("📧 Invitation sent:", invitationLink);
+        } else {
+          console.warn("⚠️ Invitation skipped:", inviteData.errors?.[0]?.message);
+        }
+      } catch (e) {
+        console.warn("⚠️ Invitation request failed:", e.message);
+      }
+    }
+
+    // ✅ 3️⃣ Save to MongoDB
     const student = await Student.create({
-      clerkId: clerkUser.id,
+      clerkId: clerkUserId,
       name,
       email,
       phone,
@@ -104,18 +149,20 @@ export async function POST(req) {
           daysLeft: mentorshipDaysLeft,
         },
       ],
+      inviteLink: invitationLink,
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Student added successfully with mentorship tracking!",
+        message: "Student added successfully!",
+        invitationLink: invitationLink || null,
         data: student,
       },
       { status: 201 }
     );
   } catch (err) {
-    console.error("Error creating student:", err);
+    console.error("❌ Error creating student:", err);
     return NextResponse.json(
       { success: false, message: err.message },
       { status: 500 }
