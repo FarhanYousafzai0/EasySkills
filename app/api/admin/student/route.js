@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Student from "@/app/models/AddStudent";
 
-
 export async function POST(req) {
   try {
     await connectDB();
@@ -16,7 +15,7 @@ export async function POST(req) {
       );
     }
 
-    // 1️⃣ Check if already exists in Mongo
+    // 1️⃣ Check if already exists
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
       return NextResponse.json(
@@ -25,11 +24,23 @@ export async function POST(req) {
       );
     }
 
-    // 2️⃣ Create Clerk User directly through API
+    // 2️⃣ Calculate mentorship period
+    const join = new Date(joinDate);
+    const duration = plan === "1-on-1 Mentorship" ? 30 : 45;
+    const mentorshipStart = join;
+    const mentorshipEnd = new Date(
+      join.getTime() + duration * 24 * 60 * 60 * 1000
+    );
+    const mentorshipDaysLeft = Math.max(
+      0,
+      Math.ceil((mentorshipEnd - new Date()) / (1000 * 60 * 60 * 24))
+    );
+
+    // 3️⃣ Create Clerk user
     const clerkResponse = await fetch("https://api.clerk.dev/v1/users", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.CLERK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -44,23 +55,22 @@ export async function POST(req) {
           totalTasks: 0,
           tasksCompleted: 0,
           issuesReported: 0,
-          mentorships: [],
+          mentorshipStart,
+          mentorshipEnd,
+          mentorshipDaysLeft,
         },
       }),
     });
 
     const clerkUser = await clerkResponse.json();
-
-    if (!clerkResponse.ok || !clerkUser.id) {
-      console.error("❌ Clerk error:", clerkUser);
+    if (!clerkResponse.ok || !clerkUser.id)
       throw new Error("Failed to create user in Clerk");
-    }
 
-    // 3️⃣ Send Email Invitation to Student
+    // 4️⃣ Send email invitation
     await fetch("https://api.clerk.dev/v1/invitations", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.CLERK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -69,7 +79,7 @@ export async function POST(req) {
       }),
     });
 
-    // 4️⃣ Save to MongoDB
+    // 5️⃣ Save to MongoDB
     const student = await Student.create({
       clerkId: clerkUser.id,
       name,
@@ -83,13 +93,23 @@ export async function POST(req) {
       totalTasks: 0,
       tasksCompleted: 0,
       issuesReported: 0,
-      mentorships: [],
+      mentorshipStart,
+      mentorshipEnd,
+      mentorshipDaysLeft,
+      mentorships: [
+        {
+          plan,
+          start: mentorshipStart,
+          end: mentorshipEnd,
+          daysLeft: mentorshipDaysLeft,
+        },
+      ],
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Student added and invitation sent successfully!",
+        message: "Student added successfully with mentorship tracking!",
         data: student,
       },
       { status: 201 }

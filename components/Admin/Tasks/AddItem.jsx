@@ -164,7 +164,7 @@ export default function AddItem() {
             <button
               key={t}
               onClick={() => setType(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              className={`px-4 py-2 cursor-pointer rounded-lg text-sm font-medium ${
                 type === t
                   ? 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
                   : 'text-gray-700 hover:bg-gray-200'
@@ -201,7 +201,7 @@ export default function AddItem() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
             disabled={loading}
-            className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white px-8 py-2 rounded-lg font-semibold shadow-md"
+            className="bg-gradient-to-r cursor-pointer from-[#9380FD] to-[#7866FA] text-white px-8 py-2 rounded-lg font-semibold shadow-md"
           >
             {loading ? 'Saving…' : 'Save'}
           </motion.button>
@@ -282,29 +282,30 @@ function TaskForm({ taskForm, setTaskForm, batches, batchLoading }) {
           <p className="text-gray-400 text-sm">Loading batches...</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {batches.map((b) => {
-              const active = taskForm.batches.includes(b.name);
-              return (
-                <button
-                  type="button"
-                  key={b._id}
-                  onClick={() => {
-                    setTaskForm((prev) => {
-                      const set = new Set(prev.batches);
-                      active ? set.delete(b.title) : set.add(b.title);
-                      return { ...prev, batches: [...set] };
-                    });
-                  }}
-                  className={`px-3 py-1 rounded-lg text-sm border ${
-                    active
-                      ? 'border-transparent bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {b.title}
-                </button>
-              );
-            })}
+          {batches.map((b) => {
+  const active = taskForm.batches.includes(b.title);
+  return (
+    <button
+      type="button"
+      key={b._id}
+      onClick={() => {
+        setTaskForm((prev) => {
+          const set = new Set(prev.batches);
+          active ? set.delete(b.title) : set.add(b.title);
+          return { ...prev, batches: [...set] };
+        });
+      }}
+      className={`px-3 py-1 rounded-lg text-sm border cursor-pointer ${
+        active
+          ? 'border-transparent bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white'
+          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+      }`}
+    >
+      {b.title}
+    </button>
+  );
+})}
+
           </div>
         )}
       </div>

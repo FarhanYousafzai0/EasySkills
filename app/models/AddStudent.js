@@ -20,35 +20,38 @@ const StudentSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    phone: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    phone: { type: String, trim: true, default: "" },
     plan: {
       type: String,
       required: [true, "Plan is required"],
       enum: ["1-on-1 Mentorship", "Group Mentorship"],
     },
-    batch: {
-      type: String,
-      default: "Unassigned",
-    },
-    joinDate: {
-      type: Date,
-      required: [true, "Join Date is required"],
-    },
-    notes: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    batch: { type: String, default: "Unassigned" },
+    joinDate: { type: Date, required: [true, "Join Date is required"] },
+    notes: { type: String, trim: true, default: "" },
+
+    // ✅ mentorship tracking
+    mentorshipStart: { type: Date },
+    mentorshipEnd: { type: Date },
+    mentorshipDaysLeft: { type: Number },
+
     // analytics & tracking
     progress: { type: Number, default: 0 },
     totalTasks: { type: Number, default: 0 },
     tasksCompleted: { type: Number, default: 0 },
     issuesReported: { type: Number, default: 0 },
-    mentorships: { type: [String], default: [] },
+
+    mentorships: {
+      type: [
+        {
+          plan: String,
+          start: Date,
+          end: Date,
+          daysLeft: Number,
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );
