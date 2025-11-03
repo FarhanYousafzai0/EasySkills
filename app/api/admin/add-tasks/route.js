@@ -34,17 +34,24 @@ export async function POST(req) {
         status: data.status || "scheduled",
       });
 
-      // 🌀 If recurring weekly, auto-generate next 4 weeks
+      // ✅ If marked recurring, create only one next week's copy
       if (data.recurringWeekly) {
         const baseDate = new Date(data.date);
-        const futureSessions = [];
-        for (let i = 1; i <= 4; i++) {
-          const next = new Date(baseDate);
-          next.setDate(next.getDate() + 7 * i);
-          futureSessions.push({
+        const nextWeek = new Date(baseDate);
+        nextWeek.setDate(baseDate.getDate() + 7);
+
+        const nextWeekDate = nextWeek.toISOString().split("T")[0];
+        const exists = await LiveSession.findOne({
+          topic: data.topic,
+          batch: data.batch,
+          date: nextWeekDate,
+        });
+
+        if (!exists) {
+          await LiveSession.create({
             topic: data.topic,
             batch: data.batch,
-            date: next.toISOString().split("T")[0],
+            date: nextWeekDate,
             time: data.time,
             recurringWeekly: true,
             meetingLink: data.meetingLink,
@@ -52,7 +59,6 @@ export async function POST(req) {
             status: "scheduled",
           });
         }
-        await LiveSession.insertMany(futureSessions);
       }
 
       return NextResponse.json({ success: true, type: "live", data: newSession });
@@ -60,7 +66,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: false, message: "Invalid kind" }, { status: 400 });
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error("❌ Error creating task/live:", err);
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }
