@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { UploadCloud, Link as LinkIcon } from 'lucide-react';
+import { UploadCloud, Link as LinkIcon, X } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
@@ -13,7 +13,7 @@ export default function SubmitTaskPage() {
 
   const [task, setTask] = useState(null);
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [link, setLink] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,11 +32,12 @@ export default function SubmitTaskPage() {
     })();
   }, [taskId]);
 
-  // ✅ Upload file to Cloudinary
+  // ✅ Upload single file to Cloudinary
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', 'student_tasks');
 
     const res = await fetch(
       `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`,
@@ -51,19 +52,21 @@ export default function SubmitTaskPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!taskId) return toast.error('Task ID missing.');
-    if (!file && !link.trim()) return toast.error('Upload a file or provide a link.');
+    if (files.length === 0 && !link.trim()) return toast.error('Upload files or provide a link.');
+    if (!user?.id) return toast.error('User not ready. Please try again in a moment.');
 
     setLoading(true);
     try {
-      let fileUrl = '';
-      let filePublicId = '';
+      const uploadedFiles = [];
 
-      if (file) {
+      // Upload each file to Cloudinary
+      for (let file of files) {
         const uploadRes = await uploadToCloudinary(file);
-        fileUrl = uploadRes.secure_url;
-        filePublicId = uploadRes.public_id;
-      } else {
-        fileUrl = link.trim();
+        uploadedFiles.push({
+          fileUrl: uploadRes.secure_url,
+          filePublicId: uploadRes.public_id,
+          originalName: file.name,
+        });
       }
 
       const res = await fetch('/api/student/submit-task', {
@@ -73,8 +76,8 @@ export default function SubmitTaskPage() {
           clerkId: user.id,
           taskId,
           description,
-          fileUrl,
-          filePublicId,
+          link: link.trim(),
+          files: uploadedFiles,
         }),
       });
 
@@ -82,7 +85,7 @@ export default function SubmitTaskPage() {
       if (!data.success) throw new Error(data.message);
       toast.success('✅ Task submitted successfully!');
       setDescription('');
-      setFile(null);
+      setFiles([]);
       setLink('');
     } catch (err) {
       toast.error(err.message || 'Submission failed.');
@@ -90,6 +93,24 @@ export default function SubmitTaskPage() {
       setLoading(false);
     }
   };
+
+  const handleFileSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    setFiles(selectedFiles);
+  };
+
+  const removeFile = (index) => {
+    const updated = [...files];
+    updated.splice(index, 1);
+    setFiles(updated);
+  };
+
+  const safeDue =
+    (task?.due && new Date(task.due)) ||
+    (task?.dueDate && new Date(task.dueDate)) ||
+    null;
+  const safePriority = task?.priority ?? '—';
+  const safeDescription = task?.description ?? 'No description provided.';
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
@@ -104,12 +125,11 @@ export default function SubmitTaskPage() {
           {task ? `Submitting for: ${task.title}` : 'Fetching task details...'}
         </p>
 
-        {/* Task Info */}
         {task && (
           <div className="bg-gray-50 p-4 rounded-xl border mb-6">
-            <p className="text-sm text-gray-700">{task.description}</p>
+            <p className="text-sm text-gray-700">{safeDescription}</p>
             <p className="text-xs text-gray-500 mt-1">
-              Due Date: {new Date(task.dueDate).toLocaleDateString()} | Priority: {task.priority}
+              Due Date: {safeDue ? safeDue.toLocaleDateString() : '—'} | Priority: {safePriority}
             </p>
           </div>
         )}
@@ -149,22 +169,40 @@ export default function SubmitTaskPage() {
 
           {/* File Upload */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Upload File</label>
+            <label className="block text-gray-700 font-medium mb-2">Upload Files</label>
             <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-[#9380FD] hover:bg-[#9380FD]/5 transition-all cursor-pointer">
               <UploadCloud size={28} className="text-[#7866FA] mb-2" />
               <input
                 type="file"
+                multiple
                 className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) => setFile(e.target.files[0])}
+                onChange={handleFileSelect}
               />
               <p className="text-sm text-gray-600">
-                {file ? (
-                  <span className="text-[#7866FA] font-medium">{file.name}</span>
+                {files.length > 0 ? (
+                  <span className="text-[#7866FA] font-medium">{files.length} file(s) selected</span>
                 ) : (
-                  <>Click to upload or drag & drop your file</>
+                  <>Click to upload or drag & drop your files</>
                 )}
               </p>
             </div>
+
+            {files.length > 0 && (
+              <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                {files.map((file, index) => (
+                  <li key={index} className="flex justify-between items-center border rounded-md px-3 py-2">
+                    <span className="truncate max-w-xs">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Submit Button */}

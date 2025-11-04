@@ -23,7 +23,8 @@ export default function AllTasksPage() {
 
     (async () => {
       try {
-        const res = await fetch(`/api/student/tasks?batch=${batch}`, { cache: 'no-store' });
+        const res = await fetch(`/api/student/tasks?batch=${batch}&clerkId=${user.id}`, { cache: 'no-store' });
+
         const data = await res.json();
         if (data.success) setTasks(data.data);
         else toast.error(data.message);

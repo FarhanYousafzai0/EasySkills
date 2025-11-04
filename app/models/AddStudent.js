@@ -41,6 +41,9 @@ const StudentSchema = new mongoose.Schema(
     tasksCompleted: { type: Number, default: 0 },
     issuesReported: { type: Number, default: 0 },
 
+    // ✅ NEW field for leaderboard scoring
+    totalScore: { type: Number, default: 0 },
+
     mentorships: {
       type: [
         {
