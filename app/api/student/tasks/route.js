@@ -10,7 +10,7 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const batch = searchParams.get("batch");
-    const clerkId = searchParams.get("clerkId"); // optional — for matching submission ownership
+    const clerkId = searchParams.get("clerkId");
 
     if (!batch) {
       return NextResponse.json(
@@ -19,35 +19,43 @@ export async function GET(req) {
       );
     }
 
-    // 🧠 Find the student (if clerkId provided)
+    // ✅ Find the student (if logged in)
     let student = null;
     if (clerkId) {
       student = await Student.findOne({ clerkId });
     }
 
-    // 🧩 Fetch all tasks assigned to this batch
+    // ✅ Get all tasks for the student's batch
     const tasks = await Task.find({ batches: { $in: [batch] } })
       .sort({ dueDate: 1 })
       .select("title description dueDate priority status");
 
-    // 🧠 If we have the student, check submissions
+    // ✅ Get all submissions by this student
     let submissions = [];
     if (student) {
       submissions = await TaskSubmission.find({ studentId: student._id });
     }
 
-    // 🧩 Merge submission data into tasks
+    // ✅ Merge tasks + submissions
     const mergedTasks = tasks.map((task) => {
       const submission = submissions.find(
         (s) => s.taskId.toString() === task._id.toString()
       );
 
-      // Determine visual status
-      const displayStatus = submission
-        ? submission.status === "Graded"
-          ? "completed"
-          : "submitted"
-        : "pending";
+      // Determine accurate visual status
+      let displayStatus = "pending";
+      let score = null;
+
+      if (submission) {
+        if (submission.status === "graded") {
+          displayStatus = "graded";
+          score = submission.score || 0;
+        } else if (submission.status === "submitted") {
+          displayStatus = "submitted";
+        } else if (submission.status === "reviewed") {
+          displayStatus = "reviewed";
+        }
+      }
 
       return {
         _id: task._id,
@@ -56,6 +64,7 @@ export async function GET(req) {
         dueDate: task.dueDate,
         priority: task.priority,
         status: displayStatus,
+        score, // 👈 will be null if not graded yet
       };
     });
 

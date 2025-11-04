@@ -22,7 +22,7 @@ export default function SubmitTaskPage() {
     if (!taskId) return;
     (async () => {
       try {
-        const res = await fetch(`/api/student/task-detail?id=${taskId}`);
+        const res = await fetch(`/api/student/task-detail?id=${taskId}`, { cache: 'no-store' });
         const data = await res.json();
         if (data.success) setTask(data.task);
         else toast.error(data.message);
@@ -32,7 +32,7 @@ export default function SubmitTaskPage() {
     })();
   }, [taskId]);
 
-  // ✅ Upload single file to Cloudinary
+  // ✅ Upload to Cloudinary
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -44,8 +44,15 @@ export default function SubmitTaskPage() {
       { method: 'POST', body: formData }
     );
 
-    if (!res.ok) throw new Error('Failed to upload file.');
-    return res.json();
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('❌ Cloudinary upload error:', text);
+      throw new Error('Failed to upload file.');
+    }
+
+    const result = await res.json();
+    console.log('✅ Cloudinary upload success:', result.secure_url);
+    return result;
   };
 
   // ✅ Submit handler
@@ -53,14 +60,13 @@ export default function SubmitTaskPage() {
     e.preventDefault();
     if (!taskId) return toast.error('Task ID missing.');
     if (files.length === 0 && !link.trim()) return toast.error('Upload files or provide a link.');
-    if (!user?.id) return toast.error('User not ready. Please try again in a moment.');
+    if (!user?.id) return toast.error('User not ready. Please try again.');
 
     setLoading(true);
     try {
       const uploadedFiles = [];
 
-      // Upload each file to Cloudinary
-      for (let file of files) {
+      for (const file of files) {
         const uploadRes = await uploadToCloudinary(file);
         uploadedFiles.push({
           fileUrl: uploadRes.secure_url,
@@ -68,6 +74,9 @@ export default function SubmitTaskPage() {
           originalName: file.name,
         });
       }
+
+      if (uploadedFiles.length === 0 && !link.trim())
+        throw new Error('No files were uploaded successfully.');
 
       const res = await fetch('/api/student/submit-task', {
         method: 'POST',
@@ -78,15 +87,20 @@ export default function SubmitTaskPage() {
           description,
           link: link.trim(),
           files: uploadedFiles,
+          status: 'submitted', // ✅ Fixed: matches schema
         }),
       });
 
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
+
       toast.success('✅ Task submitted successfully!');
       setDescription('');
       setFiles([]);
       setLink('');
+
+      // Optional — instantly show on dashboard without reload
+      window.dispatchEvent(new Event('taskSubmitted'));
     } catch (err) {
       toast.error(err.message || 'Submission failed.');
     } finally {
@@ -100,17 +114,13 @@ export default function SubmitTaskPage() {
   };
 
   const removeFile = (index) => {
-    const updated = [...files];
-    updated.splice(index, 1);
-    setFiles(updated);
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const safeDue =
     (task?.due && new Date(task.due)) ||
     (task?.dueDate && new Date(task.dueDate)) ||
     null;
-  const safePriority = task?.priority ?? '—';
-  const safeDescription = task?.description ?? 'No description provided.';
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
@@ -127,9 +137,9 @@ export default function SubmitTaskPage() {
 
         {task && (
           <div className="bg-gray-50 p-4 rounded-xl border mb-6">
-            <p className="text-sm text-gray-700">{safeDescription}</p>
+            <p className="text-sm text-gray-700">{task.description || 'No description provided.'}</p>
             <p className="text-xs text-gray-500 mt-1">
-              Due Date: {safeDue ? safeDue.toLocaleDateString() : '—'} | Priority: {safePriority}
+              Due Date: {safeDue ? safeDue.toLocaleDateString() : '—'} | Priority: {task.priority || '—'}
             </p>
           </div>
         )}
@@ -205,7 +215,7 @@ export default function SubmitTaskPage() {
             )}
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}

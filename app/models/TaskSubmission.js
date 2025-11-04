@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const TaskSubmissionSchema = new mongoose.Schema(
   {
-    // 🔹 Linked student and task references
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
@@ -13,8 +12,6 @@ const TaskSubmissionSchema = new mongoose.Schema(
       ref: "Task",
       required: true,
     },
-
-    // 🔹 Core info
     taskTitle: {
       type: String,
       required: true,
@@ -25,8 +22,6 @@ const TaskSubmissionSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
-
-    // 🔹 File uploads (supports multiple)
     files: [
       {
         fileUrl: { type: String, required: true },
@@ -34,41 +29,25 @@ const TaskSubmissionSchema = new mongoose.Schema(
         originalName: { type: String, required: true },
       },
     ],
-
-    // 🔹 Optional external submission link
     submissionLink: {
       type: String,
       trim: true,
       default: "",
     },
-
-    // 🔹 Review & grading info
-    score: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: null, // not yet graded
-    },
-    feedback: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-
-    // 🔹 Metadata
     submittedAt: {
       type: Date,
       default: Date.now,
     },
+    // ✅ All lowercase enum values
     status: {
       type: String,
-      enum: ["Pending", "Submitted", "Reviewed", "Graded"],
-      default: "Submitted",
+      enum: ["pending", "submitted", "reviewed", "graded"],
+      default: "submitted",
     },
+    score: { type: Number, default: 0 }, 
   },
   { timestamps: true }
 );
 
-// ✅ Prevent model overwrite during hot reloads
 export default mongoose.models.TaskSubmission ||
   mongoose.model("TaskSubmission", TaskSubmissionSchema);
