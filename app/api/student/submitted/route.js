@@ -25,13 +25,27 @@ export async function GET(req) {
       );
     }
 
-    // 🧩 Fetch all submissions (submitted or graded only)
+    // 🧩 Fetch and populate submission details
     const submissions = await TaskSubmission.find({
       studentId: student._id,
       status: { $in: ["submitted", "graded"] },
-    }).sort({ submittedAt: -1 });
+    })
+      .populate("taskId", "title dueDate priority")
+      .sort({ submittedAt: -1 });
 
-    return NextResponse.json({ success: true, data: submissions });
+    // 🧾 Format data for UI
+    const formatted = submissions.map((s) => ({
+      _id: s._id,
+      taskTitle: s.taskTitle || s.taskId?.title || "Unknown Task",
+      description: s.description || "",
+      submittedAt: s.submittedAt,
+      status: s.status,
+      score: s.score,
+      submissionLink: s.submissionLink,
+      files: s.files || [],
+    }));
+
+    return NextResponse.json({ success: true, data: formatted });
   } catch (err) {
     console.error("❌ Error fetching submitted tasks:", err);
     return NextResponse.json(

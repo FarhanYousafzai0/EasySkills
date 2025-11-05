@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Award, Loader2, FileText } from 'lucide-react';
+import { CheckCircle2, Award, Loader2, FileText, ExternalLink, Download } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
@@ -10,7 +10,6 @@ export default function SubmittedTasksPage() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🧠 Fetch only submitted/graded tasks
   const fetchSubmissions = useCallback(async () => {
     if (!user) return;
     try {
@@ -19,11 +18,8 @@ export default function SubmittedTasksPage() {
         cache: 'no-store',
       });
       const data = await res.json();
-      if (data.success) {
-        setSubmissions(data.data);
-      } else {
-        toast.error(data.message || 'Error fetching submitted tasks');
-      }
+      if (data.success) setSubmissions(data.data);
+      else toast.error(data.message || 'Error fetching submitted tasks');
     } catch {
       toast.error('Server error fetching submissions.');
     } finally {
@@ -45,14 +41,12 @@ export default function SubmittedTasksPage() {
   return (
     <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">My Submitted Tasks</h1>
-      <p className="text-gray-600 mb-8">
-        Review your submissions, grades, and feedback from your mentors.
-      </p>
+      <p className="text-gray-600 mb-8">Review your submissions, grades, and feedback.</p>
 
       {submissions.length === 0 ? (
         <div className="text-center text-gray-500 mt-20">
           <FileText className="mx-auto mb-3 text-gray-400" size={40} />
-          No submitted tasks yet. Complete your assignments to see them here.
+          No submitted tasks yet.
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -78,9 +72,58 @@ export default function SubmittedTasksPage() {
                   </span>
                 </div>
 
-                <p className="text-sm text-gray-700 mb-2">
+                <p className="text-sm text-gray-700 mb-3 line-clamp-2">
                   {task.description || 'No description provided.'}
                 </p>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {task.files && task.files.length > 0 && (
+                    <div className="bg-gray-50 border rounded-lg p-3 w-full">
+                      <p className="text-sm font-medium text-gray-800 mb-2">Uploaded Files:</p>
+                      <ul className="space-y-2">
+                        {task.files.map((f, idx) => (
+                          <li key={idx} className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-2 truncate max-w-[200px]">
+                              <FileText size={16} className="text-[#7866FA]" />
+                              {f.originalName}
+                            </span>
+                            <div className="flex gap-2">
+                              <a
+                                href={f.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#7866FA] hover:underline flex items-center gap-1"
+                              >
+                                <ExternalLink size={14} /> View
+                              </a>
+                              <a
+                                href={f.fileUrl}
+                                download
+                                className="text-gray-500 hover:text-[#7866FA] flex items-center gap-1"
+                              >
+                                <Download size={14} /> Download
+                              </a>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {task.submissionLink && (
+                    <div className="bg-gray-50 border rounded-lg p-3 w-full">
+                      <p className="text-sm font-medium text-gray-800 mb-2">Submission Link:</p>
+                      <a
+                        href={task.submissionLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#7866FA] hover:underline break-words"
+                      >
+                        {task.submissionLink}
+                      </a>
+                    </div>
+                  )}
+                </div>
 
                 <p
                   className={`text-xs font-medium px-2 py-1 rounded-full w-fit ${
@@ -100,19 +143,6 @@ export default function SubmittedTasksPage() {
                     Score: {task.score ?? '-'}
                   </span>
                 </div>
-
-                {task.submissionLink ? (
-                  <a
-                    href={task.submissionLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-[#7866FA] hover:underline font-medium"
-                  >
-                    View Files
-                  </a>
-                ) : (
-                  <span className="text-sm text-gray-400">No Files</span>
-                )}
               </div>
             </motion.div>
           ))}
