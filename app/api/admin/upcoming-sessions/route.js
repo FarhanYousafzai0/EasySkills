@@ -6,68 +6,68 @@ export async function GET(req) {
   try {
     await connectDB();
 
+    // Parse optional query params
     const { searchParams } = new URL(req.url);
     const daysParam = parseInt(searchParams.get("days") || "7", 10);
-    const days = Number.isFinite(daysParam) ? Math.min(Math.max(daysParam, 1), 30) : 7;
-    const batch = searchParams.get("batch") || null;
+    const days = Number.isFinite(daysParam)
+      ? Math.min(Math.max(daysParam, 1), 30)
+      : 7;
 
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(start.getDate() + days);
-
-    const startISO = start.toISOString().split("T")[0];
-    const endISO = end.toISOString().split("T")[0];
-
-    const baseMatch = { status: { $in: ["scheduled", "active"] } };
-    if (batch) baseMatch.batch = batch;
-
-    const stringSet = await LiveSession.find({
-      ...baseMatch,
-      date: { $gte: startISO, $lt: endISO },
-    }).lean();
-
-    const dateSet = await LiveSession.find({
-      ...baseMatch,
-      date: { $gte: start, $lt: end },
-    }).lean();
-
-    const seen = new Set();
-    const all = [...stringSet, ...dateSet].filter((doc) => {
-      const id = String(doc._id);
-      if (seen.has(id)) return false;
-      seen.add(id);
-      return true;
+    const now = new Date();
+    const currentDate = now.toISOString().split("T")[0];
+    const currentTime = now.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-    const normalised = all.map((s) => ({
-      ...s,
-      __dateStr:
+    // Compute upcoming date window
+    const end = new Date(now);
+    end.setDate(now.getDate() + days);
+
+    // Base query: fetch active/upcoming only
+    const baseMatch = {
+      status: { $in: ["scheduled", "active"] },
+      $or: [
+        { date: { $gt: currentDate } },
+        { date: currentDate, time: { $gt: currentTime } },
+      ],
+    };
+
+    // Fetch sessions (supporting both ISO strings and Date objects)
+    const sessions = await LiveSession.find(baseMatch)
+      .sort({ date: 1, time: 1 })
+      .select("topic batch date time meetingLink notes recurringWeekly status")
+      .lean();
+
+    if (!sessions.length) {
+      return NextResponse.json({
+        success: true,
+        message: "No upcoming sessions found.",
+        data: [],
+      });
+    }
+
+    // Normalize and format
+    const formatted = sessions.map((s) => ({
+      _id: s._id,
+      topic: s.topic,
+      batch: s.batch,
+      time: s.time,
+      meetingLink: s.meetingLink,
+      notes: s.notes || "",
+      recurringWeekly: !!s.recurringWeekly,
+      status: s.status,
+      date:
         typeof s.date === "string"
           ? s.date
           : new Date(s.date).toISOString().split("T")[0],
     }));
 
-    normalised.sort((a, b) => {
-      if (a.__dateStr !== b.__dateStr) return a.__dateStr < b.__dateStr ? -1 : 1;
-      const at = (a.time || "00:00").padStart(5, "0");
-      const bt = (b.time || "00:00").padStart(5, "0");
-      return at < bt ? -1 : at > bt ? 1 : 0;
-    });
-
+    // Group by date
     const groupedMap = new Map();
-    for (const s of normalised) {
-      if (!groupedMap.has(s.__dateStr)) groupedMap.set(s.__dateStr, []);
-      groupedMap.get(s.__dateStr).push({
-        _id: s._id,
-        topic: s.topic,
-        batch: s.batch,
-        time: s.time,
-        meetingLink: s.meetingLink,
-        notes: s.notes,
-        recurringWeekly: !!s.recurringWeekly,
-        status: s.status,
-      });
+    for (const s of formatted) {
+      if (!groupedMap.has(s.date)) groupedMap.set(s.date, []);
+      groupedMap.get(s.date).push(s);
     }
 
     const data = [...groupedMap.entries()].map(([date, sessions]) => ({
@@ -75,9 +75,15 @@ export async function GET(req) {
       sessions,
     }));
 
-    return NextResponse.json({ success: true, days, data });
+    return NextResponse.json({
+      success: true,
+      message: "Upcoming sessions fetched successfully.",
+      days,
+      total: sessions.length,
+      data,
+    });
   } catch (err) {
-    console.error("❌ upcoming-sessions error:", err);
+    console.error("❌ Error fetching admin upcoming sessions:", err);
     return NextResponse.json(
       { success: false, message: err.message },
       { status: 500 }

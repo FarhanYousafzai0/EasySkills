@@ -18,27 +18,52 @@ const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 export default function DashboardStudent() {
   const { user } = useUser();
   const [data, setData] = useState(null);
+  const [upcoming, setUpcoming] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // 🔹 Fetch student dashboard data
-  useEffect(() => {
+  const loadDashboard = async () => {
     if (!user?.id) return;
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`/api/student/dashboard?clerkId=${user.id}`, {
-          cache: 'no-store',
-        });
-        const result = await res.json();
-        if (result.success) {
-          setData(result.data);
-        } else toast.error(result.message || 'Failed to load dashboard.');
-      } catch (err) {
-        toast.error('Server error loading dashboard.');
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/student/dashboard?clerkId=${user.id}`, {
+        cache: 'no-store',
+      });
+      const result = await res.json();
+      if (result.success) {
+        setData(result.data);
+      } else toast.error(result.message || 'Failed to load dashboard.');
+    } catch (err) {
+      toast.error('Server error loading dashboard.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Fetch upcoming live session for student's batch
+  const loadUpcoming = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/student/upcoming-sessions?clerkId=${user.id}`, {
+        cache: 'no-store',
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        setUpcoming(result.data);
       }
-    };
-    fetchData();
+    } catch (err) {
+      console.error('Error fetching upcoming session', err);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboard();
+    loadUpcoming();
+    // auto-refresh every 2 mins
+    const interval = setInterval(() => {
+      loadUpcoming();
+    }, 120000);
+    return () => clearInterval(interval);
   }, [user]);
 
   // 🔸 If loading → show skeleton placeholders
@@ -100,7 +125,7 @@ export default function DashboardStudent() {
     },
   ];
 
-  const nextSession = data.upcomingSession;
+  const nextSession = upcoming || data.upcomingSession;
 
   // 🔸 Chart configurations
   const weeklyActivity = data.charts?.weeklyActivity || { labels: [], data: [] };
@@ -168,7 +193,7 @@ export default function DashboardStudent() {
                 {nextSession.topic} — {nextSession.batch}
               </h3>
               <p className="text-sm opacity-90">
-                {new Date(nextSession.date).toLocaleString()}
+                {new Date(nextSession.date).toLocaleString()} • {nextSession.time}
               </p>
             </div>
             <button

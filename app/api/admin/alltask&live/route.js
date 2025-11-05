@@ -54,33 +54,21 @@ export async function GET(req) {
       })),
     ];
 
-    // --- Filter modes ---
+    // --- Filter modes (applied only if query params are passed) ---
     if (todayOnly) {
       formatted = formatted.filter((i) => {
-        if (i.kind !== "live" || !i.date) return false;
-        const d = new Date(i.date);
+        const d = new Date(i.date || i.due);
         return d >= today && d < tomorrow;
       });
     } else if (weekOnly) {
       formatted = formatted.filter((i) => {
-        if (i.kind !== "live" || !i.date) return false;
-        const d = new Date(i.date);
+        const d = new Date(i.date || i.due);
         return d >= weekStart && d < weekEnd;
       });
     } else if (upcomingOnly) {
       formatted = formatted.filter((i) => {
-        if (i.kind !== "live" || !i.date) return false;
-        const d = new Date(i.date);
+        const d = new Date(i.date || i.due);
         return d >= now;
-      });
-    } else {
-      // Default: exclude past sessions
-      formatted = formatted.filter((i) => {
-        if (i.kind === "live" && i.date) {
-          const d = new Date(i.date);
-          return d >= today;
-        }
-        return true;
       });
     }
 
@@ -91,6 +79,7 @@ export async function GET(req) {
       return dateA - dateB;
     });
 
+    // ✅ Return all data (no default hidden filter)
     return NextResponse.json({ success: true, data: formatted });
   } catch (err) {
     console.error("❌ Error fetching items:", err);
