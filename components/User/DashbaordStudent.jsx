@@ -1,218 +1,204 @@
 'use client';
-
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import CountUp from 'react-countup';
-import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import {
   ClipboardList,
   CheckCircle,
   Clock,
   MessageSquareWarning,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 export default function DashboardStudent() {
-  const router = useRouter();
+  const { user } = useUser();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // ----- STATE -----
-  const [progress] = useState(68);
-  const [tasksCompleted] = useState(24);
-  const [totalTasks] = useState(35);
-  const [mentorshipDays] = useState(42);
-  const [issuesReported] = useState(2);
+  // 🔹 Fetch student dashboard data
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`/api/student/dashboard?clerkId=${user.id}`, {
+          cache: 'no-store',
+        });
+        const result = await res.json();
+        if (result.success) {
+          setData(result.data);
+        } else toast.error(result.message || 'Failed to load dashboard.');
+      } catch (err) {
+        toast.error('Server error loading dashboard.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
 
-  const [upcomingSession] = useState({
-    topic: 'Next.js API Integration',
-    batch: 'Batch 12',
-    date: '2025-10-16',
-    time: '8:00 PM',
-    link: 'https://zoom.us/j/123456789',
-  });
+  // 🔸 If loading → show skeleton placeholders
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 bg-gray-50 min-h-screen space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-80" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-52 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-80 w-full rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  // Calculate derived values
-  const pendingTasks = useMemo(
-    () => totalTasks - tasksCompleted,
-    [totalTasks, tasksCompleted]
-  );
+  if (!data) return null;
 
-  const nextSession = useMemo(() => upcomingSession, [upcomingSession]);
+  // 🔹 Metrics
+  const cards = [
+    {
+      title: 'Pending Tasks',
+      value: data.pendingTasks ?? 0,
+      sub: 'Awaiting Submission',
+      icon: <ClipboardList size={22} />,
+      color: 'bg-yellow-100',
+      text: 'text-yellow-600',
+    },
+    {
+      title: 'Completed Tasks',
+      value: data.completedTasks ?? 0,
+      sub: `of ${data.totalTasks ?? 0} total`,
+      icon: <CheckCircle size={22} />,
+      color: 'bg-green-100',
+      text: 'text-green-600',
+    },
+    {
+      title: 'Mentorship Days Left',
+      value: data.mentorshipDaysLeft ?? 0,
+      sub: 'in your program',
+      icon: <Clock size={22} />,
+      color: 'bg-blue-100',
+      text: 'text-blue-600',
+    },
+    {
+      title: 'Issues Reported',
+      value: 0,
+      sub: 'Reported to Admin',
+      icon: <MessageSquareWarning size={22} />,
+      color: 'bg-red-100',
+      text: 'text-red-600',
+    },
+  ];
 
-  // ----- CHART DATA -----
-  const weeklySeries = useMemo(
-    () => [{ name: 'Tasks Completed', data: [3, 5, 6, 4, 7, 8, 6] }],
-    []
-  );
+  const nextSession = data.upcomingSession;
 
-  const weeklyOptions = useMemo(
-    () => ({
-      chart: { type: 'bar', toolbar: { show: false } },
-      colors: ['#7866FA'],
-      xaxis: { categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-      grid: { borderColor: '#eee' },
-    }),
-    []
-  );
+  // 🔸 Chart configurations
+  const weeklyActivity = data.charts?.weeklyActivity || { labels: [], data: [] };
+  const gradeTrend = data.charts?.gradeTrend || { labels: [], data: [] };
 
-  const progressOptions = useMemo(
-    () => ({
-      chart: { type: 'radialBar', sparkline: { enabled: true } },
-      plotOptions: {
-        radialBar: {
-          hollow: { size: '60%' },
-          dataLabels: {
-            name: { show: true, fontSize: '14px', color: '#666' },
-            value: { fontSize: '22px', color: '#7866FA', fontWeight: 600 },
-          },
+  const weeklyOptions = {
+    chart: { type: 'bar', toolbar: { show: false } },
+    colors: ['#7866FA'],
+    xaxis: { categories: weeklyActivity.labels },
+    grid: { borderColor: '#eee' },
+  };
+  const weeklySeries = [{ name: 'Tasks Completed', data: weeklyActivity.data }];
+
+  const gradeOptions = {
+    chart: { type: 'line', toolbar: { show: false } },
+    stroke: { curve: 'smooth', width: 3 },
+    colors: ['#7866FA'],
+    xaxis: { categories: gradeTrend.labels },
+    grid: { borderColor: '#eee' },
+  };
+  const gradeSeries = [{ name: 'Grades', data: gradeTrend.data }];
+
+  const progressOptions = {
+    chart: { type: 'radialBar', sparkline: { enabled: true } },
+    plotOptions: {
+      radialBar: {
+        hollow: { size: '60%' },
+        dataLabels: {
+          name: { show: true, fontSize: '14px', color: '#666' },
+          value: { fontSize: '22px', color: '#7866FA', fontWeight: 600 },
         },
       },
-      labels: ['Overall Progress'],
-      colors: ['#9380FD'],
-    }),
-    []
-  );
+    },
+    labels: ['Overall Progress'],
+    colors: ['#9380FD'],
+  };
 
-  const progressSeries = useMemo(() => [progress], [progress]);
-
-  const lineSeries = useMemo(
-    () => [{ name: 'Grades', data: [78, 82, 88, 90, 93, 97, 95] }],
-    []
-  );
-
-  const lineOptions = useMemo(
-    () => ({
-      chart: { type: 'line', toolbar: { show: false } },
-      stroke: { curve: 'smooth', width: 3 },
-      colors: ['#7866FA'],
-      xaxis: { categories: ['Week 1', '2', '3', '4', '5', '6', '7'] },
-      grid: { borderColor: '#eee' },
-    }),
-    []
-  );
-
-  // ----- CARDS -----
-  const cards = useMemo(
-    () => [
-      {
-        title: 'Pending Tasks',
-        value: pendingTasks,
-        sub: 'Awaiting Submission',
-        icon: <ClipboardList size={22} />,
-        color: 'bg-yellow-100',
-        text: 'text-yellow-600',
-        link: '/student/tasks',
-      },
-      {
-        title: 'Completed Tasks',
-        value: tasksCompleted,
-        sub: `of ${totalTasks} total`,
-        icon: <CheckCircle size={22} />,
-        color: 'bg-green-100',
-        text: 'text-green-600',
-        link: '/student/tasks',
-      },
-      {
-        title: 'Mentorship Days Left',
-        value: mentorshipDays,
-        sub: 'in your program',
-        icon: <Clock size={22} />,
-        color: 'bg-blue-100',
-        text: 'text-blue-600',
-        link: '/student/dashboard',
-      },
-      {
-        title: 'Issues Reported',
-        value: issuesReported,
-        sub: 'Reported to Admin',
-        icon: <MessageSquareWarning size={22} />,
-        color: 'bg-red-100',
-        text: 'text-red-600',
-        link: '/student/report',
-      },
-    ],
-    [pendingTasks, tasksCompleted, totalTasks, mentorshipDays, issuesReported]
-  );
+  const progressSeries = [
+    data.totalTasks ? (data.completedTasks / data.totalTasks) * 100 : 0,
+  ];
 
   return (
-    <div className="p-5 md:p-8 bg-gray-50 min-h-screen">
+    <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
       {/* Header */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Dashboard</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        Student Dashboard
+      </h1>
       <p className="text-gray-600 mb-8">
-        Track your progress, live sessions, and pending work.
+        Track your progress, sessions, and upcoming events.
       </p>
 
-      {/* Upcoming Live Session Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md"
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          {/* Session Info */}
-          <div className="text-white text-center md:text-left w-full md:w-auto flex-1">
-            <p className="text-sm opacity-90 mb-2 uppercase tracking-wide text-center md:text-left">
-              Next Live Session
-            </p>
-
-            {nextSession ? (
-              <>
-                {/* Topic + Batch */}
-                <h3 className="text-xl md:text-2xl font-semibold mb-4 leading-snug text-center md:text-left">
-                  {nextSession.topic}{' '}
-                  <span className="opacity-90 text-white/80">— {nextSession.batch}</span>
-                </h3>
-
-                {/* Date + Time */}
-                <div className="flex flex-col sm:flex-row justify-center md:justify-start items-center gap-3">
-                  <span className="text-2xl sm:text-3xl font-medium text-white/90">
-                    {new Date(nextSession.date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </span>
-
-                  <strong className="text-5xl sm:text-6xl font-bold tracking-tight text-white">
-                    {nextSession.time}
-                  </strong>
-                </div>
-              </>
-            ) : (
-              <h3 className="text-lg font-semibold text-center md:text-left text-white">
-                No sessions scheduled
+      {/* Live Session */}
+      {nextSession ? (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="text-center md:text-left flex-1">
+              <p className="text-sm opacity-90 mb-2 uppercase tracking-wide">
+                Next Live Session
+              </p>
+              <h3 className="text-xl md:text-2xl font-semibold mb-2">
+                {nextSession.topic} — {nextSession.batch}
               </h3>
-            )}
-          </div>
-
-          {/* Join Button */}
-          {nextSession?.link && (
-            <div className="flex justify-center md:justify-end w-full md:w-auto">
-              <button
-                onClick={() => window.open(nextSession.link, '_blank')}
-                className="px-5 py-2.5 rounded-lg cursor-pointer bg-white text-[#5b4df5] font-semibold flex items-center gap-2 hover:bg-white/90 transition shadow-sm"
-              >
-                Join Session →
-              </button>
+              <p className="text-sm opacity-90">
+                {new Date(nextSession.date).toLocaleString()}
+              </p>
             </div>
-          )}
-        </div>
-      </motion.div>
+            <button
+              onClick={() => window.open(nextSession.meetingLink, '_blank')}
+              className="px-5 py-2.5 rounded-lg bg-white text-[#5b4df5] font-semibold hover:bg-white/90 transition shadow-sm"
+            >
+              Join Session →
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-6 rounded-2xl bg-white shadow-md border border-gray-100 text-gray-700"
+        >
+          <p>No upcoming sessions for your batch.</p>
+        </motion.div>
+      )}
 
-      {/* Metrics Cards */}
+      {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {cards.map((c, i) => (
           <motion.div
             key={i}
-            whileHover={{ scale: 1.04 }}
-            onClick={() => router.push(c.link)}
-            className="p-6 bg-white rounded-2xl shadow-md cursor-pointer border border-gray-100 hover:shadow-xl transition"
+            whileHover={{ scale: 1.03 }}
+            className="p-6 bg-white rounded-2xl shadow-md border border-gray-100 cursor-default hover:shadow-xl transition"
           >
             <div className="flex justify-between items-center mb-3">
-              <div className={`p-3 rounded-xl ${c.color}`}>
-                {React.cloneElement(c.icon, { className: c.text })}
-              </div>
+              <div className={`p-3 rounded-xl ${c.color}`}>{c.icon}</div>
               <span className="text-xs font-medium text-gray-500">{c.sub}</span>
             </div>
             <h3 className="text-2xl font-bold text-gray-900">
@@ -223,9 +209,8 @@ export default function DashboardStudent() {
         ))}
       </div>
 
-      {/* Charts Section */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Weekly Task Activity */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -237,7 +222,6 @@ export default function DashboardStudent() {
           <Chart options={weeklyOptions} series={weeklySeries} type="bar" height={300} />
         </motion.div>
 
-        {/* Overall Progress */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -249,7 +233,6 @@ export default function DashboardStudent() {
           <Chart options={progressOptions} series={progressSeries} type="radialBar" height={280} />
         </motion.div>
 
-        {/* Grade Trend */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -258,7 +241,7 @@ export default function DashboardStudent() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Grade Trend
           </h3>
-          <Chart options={lineOptions} series={lineSeries} type="line" height={300} />
+          <Chart options={gradeOptions} series={gradeSeries} type="line" height={300} />
         </motion.div>
       </div>
     </div>
