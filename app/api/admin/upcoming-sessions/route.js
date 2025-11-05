@@ -6,7 +6,6 @@ export async function GET(req) {
   try {
     await connectDB();
 
-    // Parse optional query params
     const { searchParams } = new URL(req.url);
     const daysParam = parseInt(searchParams.get("days") || "7", 10);
     const days = Number.isFinite(daysParam)
@@ -14,32 +13,27 @@ export async function GET(req) {
       : 7;
 
     const now = new Date();
-    const currentDate = now.toISOString().split("T")[0];
-    const currentTime = now.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    // Compute upcoming date window
     const end = new Date(now);
     end.setDate(now.getDate() + days);
 
-    // Base query: fetch active/upcoming only
-    const baseMatch = {
+    // Fetch all relevant sessions first
+    const allSessions = await LiveSession.find({
       status: { $in: ["scheduled", "active"] },
-      $or: [
-        { date: { $gt: currentDate } },
-        { date: currentDate, time: { $gt: currentTime } },
-      ],
-    };
-
-    // Fetch sessions (supporting both ISO strings and Date objects)
-    const sessions = await LiveSession.find(baseMatch)
+    })
       .sort({ date: 1, time: 1 })
       .select("topic batch date time meetingLink notes recurringWeekly status")
       .lean();
 
-    if (!sessions.length) {
+    // ✅ Combine date + time and filter properly
+    const upcoming = allSessions.filter((s) => {
+      if (!s.date || !s.time) return false;
+      const dt = new Date(s.date);
+      const [h, m] = s.time.split(":").map(Number);
+      dt.setHours(h, m, 0, 0);
+      return dt > now && dt <= end;
+    });
+
+    if (!upcoming.length) {
       return NextResponse.json({
         success: true,
         message: "No upcoming sessions found.",
@@ -47,8 +41,8 @@ export async function GET(req) {
       });
     }
 
-    // Normalize and format
-    const formatted = sessions.map((s) => ({
+    // Format sessions
+    const formatted = upcoming.map((s) => ({
       _id: s._id,
       topic: s.topic,
       batch: s.batch,
@@ -79,7 +73,7 @@ export async function GET(req) {
       success: true,
       message: "Upcoming sessions fetched successfully.",
       days,
-      total: sessions.length,
+      total: upcoming.length,
       data,
     });
   } catch (err) {

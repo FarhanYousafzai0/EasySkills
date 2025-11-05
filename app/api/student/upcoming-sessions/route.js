@@ -9,7 +9,6 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const clerkId = searchParams.get("clerkId");
-
     if (!clerkId) {
       return NextResponse.json(
         { success: false, message: "Missing clerkId" },
@@ -17,7 +16,6 @@ export async function GET(req) {
       );
     }
 
-    // 🧠 Find student's batch
     const student = await Student.findOne({ clerkId }).select("batch");
     if (!student) {
       return NextResponse.json(
@@ -28,23 +26,53 @@ export async function GET(req) {
 
     const batch = student.batch;
     const now = new Date();
-    const currentDate = now.toISOString().split("T")[0];
-    const currentTime = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
-    // 🎯 Find only future sessions for student's batch
-    const sessions = await LiveSession.find({
+    const allSessions = await LiveSession.find({
       batch,
       status: { $in: ["scheduled", "active"] },
-      $or: [
-        { date: { $gt: currentDate } },
-        { date: currentDate, time: { $gt: currentTime } },
-      ],
     })
       .sort({ date: 1, time: 1 })
-      .select("topic batch date time meetingLink status recurringWeekly");
+      .select("topic batch date time meetingLink status recurringWeekly")
+      .lean();
 
-    // 🧩 Return the next upcoming one only
-    const nextSession = sessions[0] || null;
+    // ✅ Correct UTC-based comparison
+    const upcoming = allSessions.filter((s) => {
+      if (!s.date || !s.time) return false;
+
+      // Create a UTC datetime object from date + time
+      const baseDate = new Date(s.date);
+      const [h, m] = s.time.split(":").map(Number);
+      const sessionUTC = Date.UTC(
+        baseDate.getUTCFullYear(),
+        baseDate.getUTCMonth(),
+        baseDate.getUTCDate(),
+        h,
+        m,
+        0
+      );
+
+      // Compare against current UTC time
+      const nowUTC = Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds()
+      );
+
+      return sessionUTC > nowUTC; // only keep true future sessions
+    });
+
+    const nextSession = upcoming[0] || null;
+
+    if (!nextSession) {
+      return NextResponse.json({
+        success: true,
+        message: "No upcoming session found.",
+        data: null,
+      });
+    }
 
     return NextResponse.json({
       success: true,
