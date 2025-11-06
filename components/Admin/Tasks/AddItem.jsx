@@ -3,8 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Calendar, Clock3, Tag, Layers, Plus, Repeat, Video, FileText
+  Calendar, Clock3, Tag, Layers, Plus, Repeat, Video, FileText,
+  Loader2,
+  PlusIcon
 } from 'lucide-react';
+import { MutatingDots } from 'react-loader-spinner';
 
 const priorities = ['Low', 'Medium', 'High'];
 
@@ -203,7 +206,11 @@ export default function AddItem() {
             disabled={loading}
             className="bg-gradient-to-r cursor-pointer from-[#9380FD] to-[#7866FA] text-white px-8 py-2 rounded-lg font-semibold shadow-md"
           >
-            {loading ? 'Saving…' : 'Save'}
+            {loading ? (
+             <Loader2 className="animate-spin" />
+            ) : (
+              'Save'
+            )}
           </motion.button>
         </div>
       </form>
@@ -366,17 +373,18 @@ function LiveForm({ liveForm, setLiveForm, batches, batchLoading }) {
           value={liveForm.time}
           onChange={(e) => setLiveForm({ ...liveForm, time: e.target.value })}
           required
-          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:border-[#9380FD]"
+          className="w-full border  border-gray-300 rounded-lg px-4 py-2 focus:border-[#9380FD]"
         />
       </div>
 
       <div>
         <label className="block text-sm text-gray-700 mb-1">Meeting Link</label>
         <input
+        type="url"
           value={liveForm.meetingLink}
           onChange={(e) => setLiveForm({ ...liveForm, meetingLink: e.target.value })}
           className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:border-[#9380FD]"
-          placeholder="Zoom/Meet link"
+          placeholder="https://meet.google.com/abc123"
         />
       </div>
 
