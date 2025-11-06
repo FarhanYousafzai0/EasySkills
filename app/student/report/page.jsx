@@ -48,23 +48,7 @@ export default function NewIssuePage() {
           />
         </div>
 
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Category</label>
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            required
-            className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#9380FD]"
-          >
-            <option value="">Select a category</option>
-            <option>Website Bug</option>
-            <option>Task Issue</option>
-            <option>Live Session</option>
-            <option>Payment Issue</option>
-            <option>Other</option>
-          </select>
-        </div>
+       
 
         <div>
           <label className="block text-gray-700 font-medium mb-2">Description</label>

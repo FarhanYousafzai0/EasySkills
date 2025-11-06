@@ -170,19 +170,7 @@ export default function AllItems() {
 
         {/* Filters Bar */}
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Search */}
-          <div className="flex items-center bg-gray-100/70 rounded-xl px-3 py-2 backdrop-blur-md">
-            <Search className="text-gray-500 mr-2" size={18} />
-            <input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search..."
-              className="bg-transparent outline-none text-sm w-48 text-gray-800"
-            />
-          </div>
+         
 
           {/* Type Dropdown */}
           <Dropdown
