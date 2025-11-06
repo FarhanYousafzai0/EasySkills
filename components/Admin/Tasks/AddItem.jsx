@@ -380,19 +380,7 @@ function LiveForm({ liveForm, setLiveForm, batches, batchLoading }) {
         />
       </div>
 
-      <div className="flex items-center gap-3">
-        <input
-          id="recurring"
-          type="checkbox"
-          checked={liveForm.recurringWeekly}
-          onChange={(e) => setLiveForm({ ...liveForm, recurringWeekly: e.target.checked })}
-          className="h-4 w-4 accent-[#7866FA]"
-        />
-        <label htmlFor="recurring" className="text-sm text-gray-700 flex items-center gap-2">
-          <Repeat className="h-4 w-4 text-[#9380FD]" />
-          Repeat Weekly (auto-generate upcoming sessions)
-        </label>
-      </div>
+      
 
       <div className="md:col-span-2">
         <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">

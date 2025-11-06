@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import CountUp from 'react-countup';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Calendar, ClipboardList, CheckCircle, Clock, MessageSquareWarning } from 'lucide-react';
+import { Calendar, ClipboardList, CheckCircle, Clock, MessageSquareWarning, CalendarDays } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
@@ -85,6 +85,25 @@ export default function DashboardStudent() {
     nextSession?.status === 'scheduled' ? ' Scheduled' :
     '';
 
+
+
+    const formatPakistanTime = (date, time) => {
+      try {
+        const baseDate = new Date(date);
+        const [h, m] = (time || "00:00").split(":").map(Number);
+        baseDate.setHours(h, m);
+        return baseDate.toLocaleString("en-PK", {
+          timeZone: "Asia/Karachi",
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+          month: "short",
+          day: "numeric",
+        });
+      } catch {
+        return `${date} ${time}`;
+      }
+    };
   /* ------------------------- METRIC CARDS ------------------------- */
   const cards = [
     {
@@ -174,7 +193,7 @@ export default function DashboardStudent() {
       >
         <div className="flex items-center gap-4">
           <div className="bg-white/20 p-3 rounded-xl">
-            <Calendar size={28} />
+          <CalendarDays size={28} />
           </div>
           <div>
             <p className="text-sm opacity-90 mb-1">Upcoming Live Session</p>
@@ -182,17 +201,12 @@ export default function DashboardStudent() {
               <>
                 <h3 className="text-lg font-semibold">{nextSession.topic} — {nextSession.batch}</h3>
                 <p className="text-xl opacity-90">
-                {statusLabel} •{' '}
-                  {new Date(nextSession.date).toLocaleString('en-PK', {
-                    timeZone: 'Asia/Karachi',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                
+                 {formatPakistanTime(nextSession.date, nextSession.time)}
                 </p>
+                <p className="text-sm mt-1 font-semibold">
+                {nextSession.status === "active" ? " On-Going" : "Scheduled"}
+              </p>
               </>
             ) : (
               <h3 className="text-lg font-semibold">No upcoming sessions</h3>

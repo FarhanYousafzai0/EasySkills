@@ -217,40 +217,49 @@ export default function DashboardAdmin() {
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 p-8 rounded-2xl bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md"
+          className="mb-10 rounded-2xl bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] p-6 flex justify-between items-center shadow-lg text-white"
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="text-center md:text-left flex-1">
-              <p className="text-sm opacity-90 mb-2 uppercase tracking-wide">
-                Upcoming Live Session
-              </p>
-              <h3 className="text-xl md:text-2xl font-semibold mb-2">
-                {upcomingSession.topic} — {upcomingSession.batch}
-              </h3>
-              <p className="text-sm opacity-90">
-                {formatPakistanTime(upcomingSession.date, upcomingSession.time)}
-              </p>
-              <p className="text-sm mt-1 font-semibold">
-                {upcomingSession.status === "active" ? "🟢 On-Going" : "🕒 Scheduled"}
-              </p>
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-xl">
+              <CalendarDays size={28} />
             </div>
-            {upcomingSession?.meetingLink && (
-              <button
-                onClick={() => window.open(upcomingSession.meetingLink, "_blank")}
-                className="px-5 py-2.5 rounded-lg bg-white cursor-pointer text-[#5b4df5] font-semibold hover:bg-white/90 transition shadow-sm"
-              >
-                Join Session →
-              </button>
-            )}
+            <div>
+              <p className="text-sm opacity-90 mb-1">Upcoming Live Session</p>
+              <>
+                <h3 className="text-lg font-semibold">{upcomingSession.topic} — {upcomingSession.batch}</h3>
+                <p className="text-xl opacity-90">
+                  {formatPakistanTime(upcomingSession.date, upcomingSession.time)}
+                </p>
+                <p className="text-sm mt-1 font-semibold">
+                  {upcomingSession.status === "active" ? "🟢 On-Going" : "🕒 Scheduled"}
+                </p>
+              </>
+            </div>
           </div>
+          {upcomingSession?.meetingLink && (
+            <button
+              onClick={() => window.open(upcomingSession.meetingLink, "_blank")}
+              className="bg-white/20 hover:bg-white/30 text-white px-5 py-2 cursor-pointer rounded-lg font-medium transition"
+            >
+              Join Session
+            </button>
+          )}
         </motion.div>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 p-6 rounded-2xl bg-white shadow-md border border-gray-100 text-gray-700 text-center"
+          className="mb-8 p-8 rounded-2xl bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] shadow-md text-white flex items-center justify-between"
         >
-          <p>No upcoming sessions found.</p>
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-xl flex items-center justify-center">
+              <CalendarDays size={28} />
+            </div>
+            <div className="text-left">
+              <p className="text-sm opacity-80 mb-1">Upcoming Live Session</p>
+              <h3 className="text-lg font-semibold">No upcoming sessions</h3>
+            </div>
+          </div>
         </motion.div>
       )}
 
@@ -263,7 +272,7 @@ export default function DashboardAdmin() {
             onClick={c.onClick}
             className="p-6 bg-white rounded-2xl shadow-md border border-gray-100 cursor-pointer hover:shadow-xl transition"
           >
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-3 items-center ">
               <div className={`p-3 rounded-xl ${c.color}`}>{c.icon}</div>
               <span className="text-xs font-medium text-gray-500">{c.sub}</span>
             </div>
