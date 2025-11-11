@@ -4,6 +4,7 @@ import Task from "@/app/models/Task";
 import TaskSubmission from "@/app/models/TaskSubmission";
 import Student from "@/app/models/AddStudent";
 
+// GET /api/student/tasks?batch=BatchA&clerkId=USER_ID
 export async function GET(req) {
   try {
     await connectDB();
@@ -19,41 +20,54 @@ export async function GET(req) {
       );
     }
 
-    // ✅ Find the student (if logged in)
+    // Find current student (optional, but needed to map submissions)
     let student = null;
     if (clerkId) {
-      student = await Student.findOne({ clerkId });
+      student = await Student.findOne({ clerkId }).select("_id");
     }
 
-    // ✅ Get all tasks for the student's batch
+    // All tasks in this batch
     const tasks = await Task.find({ batches: { $in: [batch] } })
       .sort({ dueDate: 1 })
-      .select("title description dueDate priority status");
+      .select("_id title description dueDate priority status");
 
-    // ✅ Get all submissions by this student
+    // All submissions by this student
     let submissions = [];
     if (student) {
-      submissions = await TaskSubmission.find({ studentId: student._id });
+      submissions = await TaskSubmission.find({ studentId: student._id })
+        .select("_id taskId status score submittedAt createdAt");
     }
 
-    // ✅ Merge tasks + submissions
-    const mergedTasks = tasks.map((task) => {
-      const submission = submissions.find(
-        (s) => s.taskId.toString() === task._id.toString()
-      );
+    // Create a map of latest submission per taskId
+    const latestByTaskId = new Map();
+    for (const sub of submissions) {
+      const key = sub.taskId.toString();
+      const prev = latestByTaskId.get(key);
+      const prevTime = prev ? new Date(prev.submittedAt || prev.createdAt).getTime() : 0;
+      const curTime = new Date(sub.submittedAt || sub.createdAt).getTime();
+      if (!prev || curTime > prevTime) latestByTaskId.set(key, sub);
+    }
 
-      // Determine accurate visual status
+    // Merge tasks + latest submissions
+    const mergedTasks = tasks.map((task) => {
+      const sub = latestByTaskId.get(task._id.toString());
       let displayStatus = "pending";
       let score = null;
 
-      if (submission) {
-        if (submission.status === "graded") {
+      if (sub) {
+        const s = (sub.status || "").toLowerCase();
+        if (s === "graded") {
           displayStatus = "graded";
-          score = submission.score || 0;
-        } else if (submission.status === "submitted") {
+          score = typeof sub.score === "number" ? sub.score : 0;
+        } else if (s === "submitted") {
           displayStatus = "submitted";
-        } else if (submission.status === "reviewed") {
+        } else if (s === "reviewed") {
           displayStatus = "reviewed";
+        } else if (s === "changes") {
+          displayStatus = "changes";
+        } else {
+          // fallback if an unknown status sneaks in
+          displayStatus = s || "submitted";
         }
       }
 
@@ -64,7 +78,7 @@ export async function GET(req) {
         dueDate: task.dueDate,
         priority: task.priority,
         status: displayStatus,
-        score, // 👈 will be null if not graded yet
+        score, // null if not graded
       };
     });
 
@@ -72,7 +86,7 @@ export async function GET(req) {
   } catch (err) {
     console.error("❌ Error fetching tasks:", err);
     return NextResponse.json(
-      { success: false, message: err.message },
+      { success: false, message: err.message || "Server error" },
       { status: 500 }
     );
   }
