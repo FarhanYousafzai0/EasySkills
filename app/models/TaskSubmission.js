@@ -38,13 +38,22 @@ const TaskSubmissionSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    // ✅ All lowercase enum values
     status: {
       type: String,
       enum: ["pending", "submitted", "reviewed", "graded"],
       default: "submitted",
     },
-    score: { type: Number, default: 0 }, 
+    score: {
+      type: Number,
+      default: 0,
+    },
+    feedback: [
+      {
+        message: { type: String, required: true },
+        fromAdmin: { type: Boolean, default: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
