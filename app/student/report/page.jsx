@@ -37,26 +37,36 @@ export default function NewIssuePage() {
 
     try {
       setUploading(true);
-      toast.loading('Uploading your issue...', { duration: 1500 });
+     
 
-      // 1️⃣ Upload all images to Cloudinary
-      const uploadedImages = [];
-      for (const file of form.files) {
-        const data = new FormData();
-        data.append('file', file);
-        data.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+      // 1️⃣ Upload all images to Cloudinary in parallel
+      const uploadedImages = await Promise.all(
+        form.files.map(async (file) => {
+          const data = new FormData();
+          data.append('file', file);
+          data.append(
+            'upload_preset',
+            process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+          );
 
-        const uploadRes = await fetch(
-          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-          { method: 'POST', body: data }
-        );
-        const uploaded = await uploadRes.json();
-        uploadedImages.push({
-          fileUrl: uploaded.secure_url,
-          filePublicId: uploaded.public_id,
-          originalName: uploaded.original_filename,
-        });
-      }
+          const uploadRes = await fetch(
+            `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+            { method: 'POST', body: data }
+          );
+
+          if (!uploadRes.ok) {
+            console.error('❌ Cloudinary upload failed:', await uploadRes.text());
+            throw new Error('Cloudinary upload failed');
+          }
+
+          const uploaded = await uploadRes.json();
+          return {
+            fileUrl: uploaded.secure_url,
+            filePublicId: uploaded.public_id,
+            originalName: uploaded.original_filename,
+          };
+        })
+      );
 
       // 2️⃣ Send metadata to backend
       const res = await fetch('/api/student/report', {
@@ -71,6 +81,7 @@ export default function NewIssuePage() {
       });
 
       const result = await res.json();
+
       if (result.success) {
         toast.success('Issue submitted successfully!');
         setForm({ title: '', description: '', files: [] });
@@ -78,7 +89,7 @@ export default function NewIssuePage() {
         toast.error(result.message || 'Failed to submit issue.');
       }
     } catch (err) {
-      console.error(err);
+      console.error(' Error submitting issue:', err);
       toast.error('Server error while submitting issue.');
     } finally {
       setUploading(false);
@@ -151,6 +162,7 @@ export default function NewIssuePage() {
                 : 'Click to upload or drag & drop'}
             </label>
           </div>
+
           {form.files.length > 0 && (
             <ul className="mt-2 text-xs text-gray-500 list-disc pl-4">
               {form.files.map((file, idx) => (

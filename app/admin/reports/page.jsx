@@ -1,5 +1,5 @@
 'use client'
-import AdminReportsView from '@/components/Admin/Reports/AdminReportsView'
+import AdminReportsView from '@/components/Admin/Reports/AdminReportsPage'
 import React from 'react'
 
 const page = () => {
