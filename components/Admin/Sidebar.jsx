@@ -16,6 +16,8 @@ import {
   HelpCircle,
   ChevronDown,
   X,
+  Wrench,
+  Video,
 } from "lucide-react";
 
 export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
@@ -51,6 +53,30 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
           { name: "Preview Tasks", path: "/admin/tasks/preview" },
         ],
       },
+
+      // 🧰 Tools Section
+      {
+        name: "Tools",
+        base: "/admin/tools",
+        icon: Wrench,
+        children: [
+          { name: "Add Tool", path: "/admin/tools/add" },
+          { name: "All Tools", path: "/admin/tools" },
+         
+        ],
+      },
+
+      // 🎓 Courses Section
+      {
+        name: "Courses",
+        base: "/admin/courses",
+        icon: Video,
+        children: [
+          { name: "Add Course", path: "/admin/courses/add" },
+          { name: "All Courses", path: "/admin/courses" },
+         
+        ],
+      },
     ],
     []
   );
@@ -70,8 +96,8 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
   const handleDropdownToggle = (name) => {
     setOpen((prev) => {
       const nextState = {};
-      Object.keys(prev).forEach((key) => (nextState[key] = false)); // close all others
-      nextState[name] = !prev[name]; // toggle current
+      Object.keys(prev).forEach((key) => (nextState[key] = false));
+      nextState[name] = !prev[name];
       return nextState;
     });
   };
@@ -109,7 +135,9 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
         </div>
 
         {/* MAIN MENU */}
-        <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">Menu</h3>
+        <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">
+          Menu
+        </h3>
         <nav className="space-y-2">
           {nav.slice(0, 2).map((item) => (
             <Link key={item.path} href={item.path} onClick={toggleSidebar}>
@@ -127,7 +155,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
         {/* DIVIDER */}
         <div className="my-5 border-t border-gray-200" />
 
-        {/* GROUPS (Students, Batches, etc.) */}
+        {/* GROUPS (Students, Tasks, Tools, etc.) */}
         <nav className="space-y-2 overflow-y-auto max-h-[60vh] pr-1">
           {nav.slice(2).map((item) => {
             if (item.children) {
@@ -148,6 +176,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
                       className={`transition-transform ${groupOpen ? "rotate-180" : ""}`}
                     />
                   </button>
+
                   <AnimatePresence initial={false}>
                     {groupOpen && (
                       <motion.div
@@ -179,7 +208,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
               );
             }
 
-            // Simple (non-group) item
+            // Simple item
             return (
               <Link key={item.path} href={item.path} onClick={toggleSidebar}>
                 <motion.div
@@ -193,9 +222,6 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
             );
           })}
         </nav>
-
-        
-        
       </div>
 
       {/* FOOTER */}
