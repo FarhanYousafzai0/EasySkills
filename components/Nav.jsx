@@ -1,5 +1,5 @@
 'use client';
-import { Home, HelpCircle,  GraduationCap,  VectorSquare,       UserPlus } from 'lucide-react'
+import { Home, HelpCircle,  GraduationCap,  VectorSquare,       UserPlus, BookOpen } from 'lucide-react'
 
 
 import React, { useState, useEffect } from 'react';
@@ -62,6 +62,8 @@ const Nav = () => {
 
   const authedLinks = [
     { name: 'Dashboard', path: dashboardPath, icon: LayoutDashboard },
+
+    { name: 'Courses', path: '/courses', icon: BookOpen }
   ];
 
   const NavItems = isSignedIn ? [...baseLinks, ...authedLinks] : baseLinks;
