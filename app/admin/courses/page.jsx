@@ -44,9 +44,15 @@ export default function AdminAllCoursesPage() {
             <h2 className="font-bold text-lg">{c.title}</h2>
             <p className="text-sm text-gray-600">{c.category}</p>
 
+            {/* 🔥 Sections + Videos Count */}
+            <div className="flex items-center gap-4 text-sm text-gray-700 mt-2">
+              <span>  Sections: {c.totalSections}</span>
+              <span>  Videos: {c.totalVideos}</span>
+            </div>
+
             <a
               href={`/admin/courses/${c._id}`}
-              className="mt-3 inline-block px-4 py-2 bg-black text-white rounded-lg"
+              className="mt-4 inline-block px-4 py-2 bg-black text-white rounded-lg"
             >
               Manage
             </a>

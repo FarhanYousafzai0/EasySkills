@@ -3,12 +3,11 @@ import { connectDB } from "@/lib/mongodb";
 import Course from "@/app/models/Course";
 
 /* ---------------------------------------------------
-   ADD VIDEO  (POST)
+   ADD VIDEO (POST)
 ----------------------------------------------------- */
-export async function POST(req, context) {
+export async function POST(req, { params }) {
   try {
     await connectDB();
-    const { id } = await context.params;
 
     const {
       sectionId,
@@ -16,55 +15,63 @@ export async function POST(req, context) {
       description = "",
       videoUrl,
       publicId = "",
-      duration = 0,
+      duration = "",
       order = 0,
     } = await req.json();
 
-    if (!sectionId || !title || !videoUrl) {
+    if (!sectionId || !title?.trim() || !videoUrl?.trim()) {
       return NextResponse.json(
         { success: false, message: "sectionId, title & videoUrl are required" },
         { status: 400 }
       );
     }
 
-    const course = await Course.findById(id);
-    if (!course)
+    const course = await Course.findById(params.id);
+    if (!course) {
       return NextResponse.json(
         { success: false, message: "Course not found" },
         { status: 404 }
       );
+    }
 
     const section = course.sections.id(sectionId);
-    if (!section)
+    if (!section) {
       return NextResponse.json(
         { success: false, message: "Section not found" },
         { status: 404 }
       );
+    }
 
-    const newVideo = { title, description, videoUrl, publicId, duration, order };
-    section.items.push(newVideo);
+    section.items.push({
+      title: title.trim(),
+      description: description.trim(),
+      videoUrl: videoUrl.trim(),
+      publicId,
+      duration,
+      order,
+    });
+
     await course.save();
 
     return NextResponse.json({
       success: true,
-      message: "Video added",
-      video: section.items.at(-1),
-      section,
+      sections: course.sections,
     });
   } catch (err) {
     console.error("ERROR ADDING VIDEO:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
 
 /* ---------------------------------------------------
    UPDATE VIDEO (PUT)
 ----------------------------------------------------- */
-export async function PUT(req, context) {
+export async function PUT(req, { params }) {
   try {
     await connectDB();
-    const { id } = await context.params;
-
     const { sectionId, videoId, ...updates } = await req.json();
 
     if (!sectionId || !videoId) {
@@ -74,49 +81,52 @@ export async function PUT(req, context) {
       );
     }
 
-    const course = await Course.findById(id);
-    if (!course)
+    const course = await Course.findById(params.id);
+    if (!course) {
       return NextResponse.json(
         { success: false, message: "Course not found" },
         { status: 404 }
       );
+    }
 
     const section = course.sections.id(sectionId);
-    if (!section)
+    if (!section) {
       return NextResponse.json(
         { success: false, message: "Section not found" },
         { status: 404 }
       );
+    }
 
     const video = section.items.id(videoId);
-    if (!video)
+    if (!video) {
       return NextResponse.json(
         { success: false, message: "Video not found" },
         { status: 404 }
       );
+    }
 
     Object.assign(video, updates);
     await course.save();
 
     return NextResponse.json({
       success: true,
-      message: "Video updated",
-      video,
-      section,
+      sections: course.sections,
     });
   } catch (err) {
     console.error("ERROR UPDATING VIDEO:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
 
 /* ---------------------------------------------------
    DELETE VIDEO (DELETE)
 ----------------------------------------------------- */
-export async function DELETE(req, context) {
+export async function DELETE(req, { params }) {
   try {
     await connectDB();
-    const { id } = await context.params;
 
     const sectionId = req.nextUrl.searchParams.get("sectionId");
     const videoId = req.nextUrl.searchParams.get("videoId");
@@ -128,37 +138,42 @@ export async function DELETE(req, context) {
       );
     }
 
-    const course = await Course.findById(id);
-    if (!course)
+    const course = await Course.findById(params.id);
+    if (!course) {
       return NextResponse.json(
         { success: false, message: "Course not found" },
         { status: 404 }
       );
+    }
 
     const section = course.sections.id(sectionId);
-    if (!section)
+    if (!section) {
       return NextResponse.json(
         { success: false, message: "Section not found" },
         { status: 404 }
       );
+    }
 
     const video = section.items.id(videoId);
-    if (!video)
+    if (!video) {
       return NextResponse.json(
         { success: false, message: "Video not found" },
         { status: 404 }
       );
+    }
 
-    section.items.pull(videoId);
+    video.deleteOne();
     await course.save();
 
     return NextResponse.json({
       success: true,
-      message: "Video deleted",
-      section,
+      sections: course.sections,
     });
   } catch (err) {
     console.error("ERROR DELETING VIDEO:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }

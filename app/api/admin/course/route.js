@@ -10,6 +10,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+
+// ========================
+// 🔥 GET ALL COURSES
+// ========================
 export async function GET(req) {
   try {
     await connectDB();
@@ -28,21 +32,49 @@ export async function GET(req) {
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
-        .select("title description thumbnailUrl category price durationLabel isPublished createdAt"),
+        .lean(),
       Course.countDocuments(filter),
     ]);
 
-    return NextResponse.json({ success: true, data: items, total, page, limit });
+    // 🔥 Add Section Count + Video Count
+    const coursesWithCounts = items.map((course) => {
+      const totalSections = course.sections?.length || 0;
+
+      const totalVideos =
+        course.sections?.reduce((sum, sec) => {
+          return sum + (sec.items?.length || 0);
+        }, 0) || 0;
+
+      return {
+        ...course,
+        totalSections,
+        totalVideos,
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: coursesWithCounts,
+      total,
+      page,
+      limit,
+    });
   } catch (err) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
 
+
+// ========================
+// 🔥 CREATE COURSE
+// ========================
 export async function POST(req) {
   try {
     await connectDB();
 
-    // 🔥 MUST use FormData for file uploads
     const form = await req.formData();
 
     const title = form.get("title");
@@ -63,7 +95,7 @@ export async function POST(req) {
       );
     }
 
-    // 🔥 UPLOAD IMAGE IF PROVIDED
+    // 🔥 Upload Thumbnail (if provided)
     let thumbnailUrl = "";
     let thumbnailPublicId = "";
 
@@ -83,7 +115,7 @@ export async function POST(req) {
       thumbnailPublicId = uploaded.public_id;
     }
 
-    // 🔥 CREATE COURSE
+    // 🔥 Create Course
     const doc = await Course.create({
       title,
       description,
@@ -101,6 +133,9 @@ export async function POST(req) {
     return NextResponse.json({ success: true, data: doc }, { status: 201 });
   } catch (err) {
     console.log("ERROR:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
