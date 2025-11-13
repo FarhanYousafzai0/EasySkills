@@ -10,13 +10,20 @@ export async function GET(req) {
     const clerkId = searchParams.get("clerkId") || "";
     const courseId = searchParams.get("courseId") || "";
 
-    if (!clerkId || !courseId)
-      return NextResponse.json({ success: false, message: "clerkId and courseId are required" }, { status: 400 });
+    if (!clerkId || !courseId) {
+      return NextResponse.json(
+        { success: false, message: "clerkId and courseId are required" },
+        { status: 400 }
+      );
+    }
 
     const prog = await Progress.findOne({ clerkId, courseId });
     return NextResponse.json({ success: true, data: prog || null });
   } catch (err) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
 
@@ -24,27 +31,47 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     await connectDB();
-    const { clerkId, courseId, videoId, completed, lastWatchedVideo = "" } = await req.json();
+    const {
+      clerkId,
+      courseId,
+      videoId,
+      completed,
+      lastWatchedVideo = "",
+    } = await req.json();
 
-    if (!clerkId || !courseId || !videoId)
-      return NextResponse.json({ success: false, message: "clerkId, courseId, videoId required" }, { status: 400 });
+    if (!clerkId || !courseId || !videoId) {
+      return NextResponse.json(
+        { success: false, message: "clerkId, courseId, videoId required" },
+        { status: 400 }
+      );
+    }
 
-    const prog =
+    let prog =
       (await Progress.findOne({ clerkId, courseId })) ||
-      (await Progress.create({ clerkId, courseId, completedVideos: [], percentage: 0 }));
+      (await Progress.create({
+        clerkId,
+        courseId,
+        completedVideos: [],
+        percentage: 0,
+      }));
 
-    const set = new Set(prog.completedVideos);
-    if (completed) set.add(videoId);
-    else set.delete(videoId);
+    const set = new Set(prog.completedVideos.map(String));
+    if (completed) set.add(String(videoId));
+    else set.delete(String(videoId));
 
     prog.completedVideos = Array.from(set);
-    if (lastWatchedVideo) prog.lastWatchedVideo = lastWatchedVideo;
+    if (lastWatchedVideo) {
+      prog.lastWatchedVideo = String(lastWatchedVideo);
+    }
 
     prog.percentage = await computePercentage(clerkId, courseId);
     await prog.save();
 
     return NextResponse.json({ success: true, data: prog });
   } catch (err) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
