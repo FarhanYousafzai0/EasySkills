@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Course from "@/app/models/Course";
+import { v2 as cloudinary } from "cloudinary";
+
+// Cloudinary Config
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function GET(req) {
   try {
@@ -33,22 +41,49 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     await connectDB();
-    const body = await req.json();
-    const {
-      title,
-      description = "",
-      thumbnailUrl = "",
-      thumbnailPublicId = "",
-      category = "General",
-      level = "Beginner",
-      price = 0,
-      durationLabel = "",
-      accessTill = null,
-      isPublished = false,
-    } = body;
 
-    if (!title) return NextResponse.json({ success: false, message: "Title is required" }, { status: 400 });
+    // 🔥 MUST use FormData for file uploads
+    const form = await req.formData();
 
+    const title = form.get("title");
+    const description = form.get("description") || "";
+    const level = form.get("level") || "";
+    const category = form.get("category") || "";
+    const accessTill = form.get("accessTill") || null;
+    const price = Number(form.get("price") || 0);
+    const durationLabel = form.get("durationLabel") || "";
+    const isPublished = form.get("isPublished") === "true";
+
+    const file = form.get("thumbnail");
+
+    if (!title) {
+      return NextResponse.json(
+        { success: false, message: "Title is required" },
+        { status: 400 }
+      );
+    }
+
+    // 🔥 UPLOAD IMAGE IF PROVIDED
+    let thumbnailUrl = "";
+    let thumbnailPublicId = "";
+
+    if (file && file.size > 0) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+
+      const uploaded = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "lms/courses" }, (err, result) => {
+            if (err) reject(err);
+            else resolve(result);
+          })
+          .end(buffer);
+      });
+
+      thumbnailUrl = uploaded.secure_url;
+      thumbnailPublicId = uploaded.public_id;
+    }
+
+    // 🔥 CREATE COURSE
     const doc = await Course.create({
       title,
       description,
@@ -65,6 +100,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, data: doc }, { status: 201 });
   } catch (err) {
+    console.log("ERROR:", err);
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }
