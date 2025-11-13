@@ -4,7 +4,7 @@ const ProgressSchema = new mongoose.Schema(
   {
     clerkId: { type: String, required: true, index: true },
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true, index: true },
-    completedVideos: { type: [String], default: [] }, // store video _id strings
+    completedVideos: { type: [String], default: [] }, 
     lastWatchedVideo: { type: String, default: "" },
     percentage: { type: Number, default: 0 },
   },
