@@ -183,7 +183,7 @@ export default function StudentCoursePlayerPage() {
 
   if (!isLoaded || (loading && !course)) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh] bg-slate-950">
+      <div className="flex items-center justify-center min-h-screen"> 
         <Loader2 size={32} className="animate-spin text-[#7866FA]" />
       </div>
     );
@@ -191,7 +191,7 @@ export default function StudentCoursePlayerPage() {
 
   if (!course) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh] bg-slate-950 text-slate-200">
+      <div className="flex items-center justify-center min-h-screen text-slate-200">
         Failed to load course.
       </div>
     );
@@ -211,7 +211,7 @@ export default function StudentCoursePlayerPage() {
         {/* Top bar */}
         <div className="px-4 pt-4 pb-3 border-b border-white/10 flex items-center justify-between">
           <button
-            onClick={() => router.push("/student/courses")}
+            onClick={() => router.push("/courses")}
             className="inline-flex items-center gap-1 text-[11px] text-slate-300 hover:text-white"
           >
             <ArrowLeft size={14} /> Back to courses

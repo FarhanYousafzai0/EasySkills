@@ -82,7 +82,7 @@ export async function POST(req) {
     const level = form.get("level") || "";
     const category = form.get("category") || "";
     const accessTill = form.get("accessTill") || null;
-    const price = Number(form.get("price") || 0);
+   
     const durationLabel = form.get("durationLabel") || "";
     const isPublished = form.get("isPublished") === "true";
 
@@ -123,7 +123,7 @@ export async function POST(req) {
       thumbnailPublicId,
       category,
       level,
-      price,
+    
       durationLabel,
       accessTill,
       isPublished,

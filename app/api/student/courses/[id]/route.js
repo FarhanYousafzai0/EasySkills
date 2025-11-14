@@ -6,6 +6,7 @@ import Progress from "@/app/models/Progress";
 export async function GET(req, { params }) {
   try {
     await connectDB();
+    const resolved = await params;
     const { searchParams } = new URL(req.url);
     const clerkId = searchParams.get("clerkId") || "";
 

@@ -85,7 +85,7 @@ export default function AllTasksPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
         <motion.div whileHover={{ scale: 1.03 }} className={cardBase}>
           <div>
-            <p className="text-gray-500 text-sm mb-1">Graded Tasks</p>
+            <p className="text-gray-500 text-sm mb-1">Approved Tasks</p>
             <h2 className="text-3xl font-bold text-[#7866FA] flex items-center gap-2">
               <CountUp end={graded} duration={1.2} />
             </h2>
@@ -164,9 +164,9 @@ export default function AllTasksPage() {
                     <td className="py-3 px-4">{task.priority || '—'}</td>
 
                     <td className="py-3 px-4 capitalize">
-                      {task.status === 'graded' ? (
+                      {task.status === 'approved' ? (
                         <span className="flex items-center gap-1 text-green-600 font-medium">
-                          <CheckCircle size={14} /> Graded
+                          <CheckCircle size={14} /> Approved
                         </span>
                       ) : ['submitted', 'reviewed'].includes(task.status) ? (
                         <span className="flex items-center gap-1 text-[#7866FA] font-medium">
@@ -188,7 +188,7 @@ export default function AllTasksPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      {task.status === 'graded' ? (
+                      {task.status === 'approved' ? (
                         <span className="text-green-600 font-medium">Completed</span>
                       ) : (
                         <motion.button

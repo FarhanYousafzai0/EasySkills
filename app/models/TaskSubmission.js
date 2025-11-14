@@ -40,7 +40,7 @@ const TaskSubmissionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "submitted", "reviewed", "graded"],
+      enum: ["pending", "submitted", "reviewed", "approved"],
       default: "submitted",
     },
     score: {

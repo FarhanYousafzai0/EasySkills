@@ -116,6 +116,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
       {/* Header */}
       <div>
         <div className="flex items-center justify-between mb-8">
+          <Link href="/">
           <div
             className="flex items-center gap-3 cursor-pointer select-none"
             onClick={() => {
@@ -125,6 +126,7 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
           >
             <Image src="/Logo.svg" alt="Logo" width={140} height={36} priority />
           </div>
+          </Link>
           <button
             className="md:hidden hover:bg-gray-100 rounded-lg p-1.5"
             onClick={toggleSidebar}

@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { Film, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import Nav from "@/components/Nav";
 
 export default function StudentCoursesPage() {
   const router = useRouter();
@@ -47,14 +48,17 @@ export default function StudentCoursesPage() {
 
   if (!isLoaded || (loading && courses.length === 0)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center ">
         <Loader2 size={32} className="animate-spin text-[#7866FA]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen mt-20  px-4 py-6 md:px-8 md:py-10 text-slate-50">
+    
+   <>
+   <Nav/>
+   <div className="min-h-screen mt-20  px-4 py-6 md:px-8 md:py-10 text-slate-50">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 mb-8">
@@ -190,5 +194,6 @@ export default function StudentCoursesPage() {
         )}
       </div>
     </div>
+   </>
   );
 }

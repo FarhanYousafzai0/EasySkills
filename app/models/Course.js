@@ -29,7 +29,7 @@ const CourseSchema = new mongoose.Schema(
     thumbnailPublicId: { type: String, default: "" },
     category: { type: String, default: "General" },
     level: { type: String, default: "Beginner" },
-    price: { type: Number, default: 0 },
+ 
     durationLabel: { type: String, default: "" }, // e.g. "4 months"
     accessTill: { type: Date, default: null },
     sections: { type: [SectionSchema], default: [] },

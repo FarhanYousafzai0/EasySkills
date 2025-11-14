@@ -17,7 +17,7 @@ export default function PreviewSubmissions() {
     sub: null,
     score: '',
     message: '',
-    status: 'graded'
+    status: 'approved'
   });
 
   // 🧠 Fetch all submissions
@@ -58,7 +58,7 @@ export default function PreviewSubmissions() {
       const data = await res.json();
       if (data.success) {
         toast.success('Feedback saved');
-        setModal({ open: false, sub: null, score: '', message: '', status: 'graded' });
+        setModal({ open: false, sub: null, score: '', message: '', status: 'approved' });
         fetchSubs();
       } else toast.error(data.message);
     } catch {
@@ -131,7 +131,7 @@ export default function PreviewSubmissions() {
                   </div>
                   <span
                     className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${
-                      s.status === 'graded'
+                      s.status === 'approved'
                         ? 'bg-green-100 text-green-700'
                         : s.status === 'changes'
                         ? 'bg-amber-100 text-amber-700'
@@ -228,7 +228,7 @@ export default function PreviewSubmissions() {
                 onChange={(e) => setModal({ ...modal, status: e.target.value })}
                 className="w-full border rounded-lg p-2 mt-1 mb-5 text-sm"
               >
-                <option value="graded">Graded</option>
+                <option value="approved">Approved</option>
                 <option value="changes">Needs Changes</option>
                 <option value="reviewed">Reviewed</option>
               </select>
