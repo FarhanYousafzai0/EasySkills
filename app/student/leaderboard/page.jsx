@@ -1,162 +1,292 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Star, Trophy, Award } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Award,
+  Medal,
+  Trophy,
+  TrendingUp,
+  Target,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+} from "lucide-react";
 
-export default function StudentLeaderboard() {
-  const { user } = useUser();
-  const batch = user?.publicMetadata?.batch;
-
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [mode, setMode] = useState("global");
-  const [loading, setLoading] = useState(true);
-
-  const fetchLeaderboard = async () => {
-    setLoading(true);
-
-    let res;
-
-    if (mode === "global") {
-      res = await fetch("/api/student/leaderboard/global");
-    } else {
-      res = await fetch("/api/student/leaderboard/batch", {
-        method: "POST",
-        body: JSON.stringify({ batch }),
-      });
-    }
-
-    const data = await res.json();
-    if (data.success) setLeaderboard(data.data);
-
-    setLoading(false);
-  };
+export default function StudentLeaderboardPage() {
+  const [data, setData] = useState([]);
+  const [me, setMe] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    if (batch) fetchLeaderboard();
-  }, [mode, batch]);
+    fetchLeaderboard();
+    fetchMe();
+  }, []);
 
-  const getMedalColor = (rank) => {
-    if (rank === 1) return "from-yellow-400 to-yellow-500";
-    if (rank === 2) return "from-gray-300 to-gray-400";
-    if (rank === 3) return "from-amber-600 to-amber-700";
-    return "from-[#9380FD] to-[#7866FA]";
+  const fetchLeaderboard = async () => {
+    const res = await fetch("/api/admin/leaderboard/all", { cache: "no-store" });
+    const json = await res.json();
+    if (json.success) setData(json.data || []);
   };
 
-  const calculateStars = (points) => {
-    if (points >= 100) return 5;
-    if (points >= 75) return 4;
-    if (points >= 50) return 3;
-    if (points >= 25) return 2;
-    return 1;
+  const fetchMe = async () => {
+    const res = await fetch("/api/student/me");
+    const json = await res.json();
+    if (json.success) setMe(json.user);
   };
 
-  const getStars = (count) =>
-    Array.from({ length: count }).map((_, i) => (
-      <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />
-    ));
+  const topThree = data.slice(0, 3);
+  const others = data.slice(3);
+  const totalPages = Math.ceil(others.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = others.slice(startIndex, startIndex + itemsPerPage);
 
-  if (loading) return <p className="p-10 text-gray-600">Loading leaderboard…</p>;
-
-  const topThree = leaderboard.slice(0, 3);
-  const rest = leaderboard.slice(3);
+  const myRank = me ? data.findIndex((x) => x.userId === me.clerkId) + 1 : null;
+  const myData = me ? data.find((x) => x.userId === me.clerkId) : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="min-h-screen bg-gray-50 p-6 md:p-10"
-    >
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">🏆 Leaderboard</h2>
-
-        <select
-          className="border rounded-lg p-2 text-sm"
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
+    <div className="min-h-screen bg-white p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* HEADER */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
         >
-          <option value="global">🌍 Global Ranking</option>
-          <option value="batch">📌 My Batch ({batch})</option>
-        </select>
-      </div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="  bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] rounded-md p-2"> <Trophy className="w-8 h-8   text-white" /></div>
+            <h1 className="text-4xl font-bold text-black">Leaderboard</h1>
+          </div>
+          <p className="text-gray-500">
+            Compete with your peers and climb the rankings!
+          </p>
+        </motion.div>
 
-      {/* PODIUM */}
-      <div className="flex flex-col sm:flex-row justify-center items-end gap-6 mb-12">
-        {topThree.map((student, idx) => {
-          const rank = idx + 1;
-          const stars = calculateStars(student.points);
-          const size = rank === 1 ? "h-52" : rank === 2 ? "h-44" : "h-40";
-
-          return (
-            <motion.div
-              key={student.userId}
-              whileHover={{ y: -6, scale: 1.02 }}
-              className={`relative flex flex-col justify-end items-center bg-gradient-to-t ${getMedalColor(
-                rank
-              )} text-white rounded-2xl shadow-lg p-4 ${size} w-48`}
-            >
-              <div className="absolute -top-6">
-                {rank === 1 && <Trophy size={40} className="text-yellow-300" />}
-                {rank === 2 && <Award size={38} className="text-gray-300" />}
-                {rank === 3 && <Award size={38} className="text-amber-600" />}
+        {/* MY CARD */}
+        {me && myData && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-10 bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] rounded-2xl p-6 shadow-xl text-white relative overflow-hidden"
+          >
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-5 h-5 text-white" />
+                <p className="text-sm font-semibold opacity-90">Your Performance</p>
               </div>
 
-              <h3 className="text-lg font-semibold mt-6">{student.userId}</h3>
-              <p className="text-sm text-white/80">{student.batch}</p>
-
-              <div className="flex gap-1 mt-2">{getStars(stars)}</div>
-
-              <p className="text-sm mt-2 font-medium">{student.points} Points</p>
-
-              <span className="absolute -bottom-4 bg-white text-gray-800 w-10 h-10 rounded-full flex justify-center items-center font-bold shadow-md">
-                {rank}
-              </span>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* REST LIST */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {rest.map((s, index) => {
-          const stars = calculateStars(s.points);
-
-          return (
-            <motion.div
-              key={s.userId}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 hover:shadow-md transition-all"
-            >
-              <div className="flex justify-between items-center mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {/* Rank */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    #{index + 4} {s.userId}
-                  </h3>
-                  <p className="text-sm text-gray-500">{s.batch}</p>
+                  <p className="text-sm opacity-80 mb-1">Your Rank</p>
+                  <p className="text-4xl font-bold">#{myRank}</p>
+                  <p className="text-sm opacity-80">out of {data.length}</p>
                 </div>
-                <div className="flex">{getStars(stars)}</div>
-              </div>
 
-              <div className="w-full bg-gray-200 h-2 rounded-full mb-2">
+                {/* Points */}
+                <div>
+                  <p className="text-sm opacity-80 mb-1">Total Points</p>
+                  <p className="text-4xl font-bold">{myData.points}</p>
+                  <p className="text-sm opacity-80">Keep pushing!</p>
+                </div>
+
+                {/* Tasks */}
+                <div>
+                  <p className="text-sm opacity-80 mb-1">Tasks Completed</p>
+                  <p className="text-4xl font-bold">{myData.tasksCompleted}</p>
+                  <p className="text-sm opacity-80">Great work!</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* TOP 3 CLEAN VERSION */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10"
+        >
+          <h2 className="text-2xl font-bold text-black mb-6 flex items-center gap-2">
+            <Award className="text-white" /> Top Performers
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {topThree.map((user, index) => {
+              const isMe = me && user.userId === me.clerkId;
+
+              /** FINAL THEME:
+               * 🥇 1st: Gold Icon, White Card + Purple Border
+               * 🥈🥉 2nd/3rd: Purple Icon (Medal), White Card
+               */
+
+              const placeText =
+                index === 0 ? "1st Place" : index === 1 ? "2nd Place" : "3rd Place";
+
+              const Icon = index === 0 ? Trophy : Medal;
+              const iconColor =
+                index === 0 ? "text-white" : "text-[#7866FA]";
+
+              return (
                 <motion.div
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `${Math.min((s.points / 100) * 100, 100)}%`,
-                  }}
-                  transition={{ duration: 0.8 }}
-                  className="h-2 rounded-full bg-gradient-to-r from-[#9380FD] to-[#7866FA]"
-                ></motion.div>
-              </div>
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative"
+                >
+                  {/* Badge */}
+                  <div className="absolute -top-4 -right-4 w-14 h-14 rounded-full bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] flex items-center justify-center shadow-lg">
+                    <Icon className={`w-7 h-7 text-white ${iconColor}`} />
+                  </div>
 
-              <div className="flex justify-between items-center text-sm text-gray-600">
-                <span>{s.points} Points</span>
+                  {/* Card */}
+                  <div
+                    className={`bg-white rounded-2xl p-6 shadow-xl border ${
+                      isMe
+                        ? "border-[#7866FA] ring-4 ring-[#7866FA]/20"
+                        : "border-slate-200 hover:border-[#7866FA]"
+                    }`}
+                  >
+                    {isMe && (
+                      <div className="absolute -top-3 left-4 bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] text-white text-xs font-bold px-3 py-1 rounded-full">
+                        YOU
+                      </div>
+                    )}
+
+                    <p className="text-sm text-gray-500">{placeText}</p>
+                    <h3 className="text-xl font-bold text-black">{user.name}</h3>
+                    <p className="text-sm text-gray-500 mb-4">Batch {user.batch}</p>
+
+                    {/* Stats */}
+                    <div className="space-y-3 mt-4">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Points</span>
+                        <span className="text-xl font-bold text-black">{user.points}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Tasks</span>
+                        <span className="text-lg font-semibold text-black">
+                          {user.tasksCompleted}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* TABLE */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <h2 className="text-2xl font-bold text-black mb-6">All Rankings</h2>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  {["Rank", "Student", "Batch", "Points", "Tasks"].map((h) => (
+                    <th
+                      key={h}
+                      className="py-4 px-6 text-left font-semibold text-gray-600 text-sm"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {paginatedData.map((user, i) => {
+                  const rank = startIndex + i + 4;
+                  const isMe = me && user.userId === me.clerkId;
+
+                  return (
+                    <tr
+                      key={user._id}
+                      className={`border-t border-slate-100 ${
+                        isMe ? "bg-purple-50/50 font-semibold" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <td className="py-4 px-6">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                            isMe
+                              ? "bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] text-white"
+                              : "bg-slate-100 text-gray-700"
+                          }`}
+                        >
+                          {rank}
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6 text-black flex items-center gap-2">
+                        {user.name}
+                        {isMe && (
+                          <span className="bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] text-white text-xs px-2 py-1 rounded-full">
+                            YOU
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-6 text-gray-600">{user.batch}</td>
+
+                      <td className="py-4 px-6">
+                        <span className="font-bold text-black">{user.points}</span>
+                      </td>
+
+                      <td className="py-4 px-6 text-gray-700 font-medium">
+                        {user.tasksCompleted}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* PAGINATION */}
+            {totalPages > 1 && (
+              <div className="border-t border-slate-200 p-4 bg-white">
+                <div className="flex justify-center items-center gap-2">
+                  {/* Prev */}
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg bg-white border border-slate-200 disabled:opacity-50 hover:bg-slate-100 transition"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-black" />
+                  </button>
+
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-10 h-10 rounded-lg font-semibold transition ${
+                        currentPage === i + 1
+                          ? "bg-gradient-to-r from-[#9E8CFF] to-[#7866FA] text-white shadow-lg"
+                          : "bg-white border border-slate-200 text-black hover:border-[#7866FA]"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  {/* Next */}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg bg-white border border-slate-200 disabled:opacity-50 hover:bg-slate-100 transition"
+                  >
+                    <ChevronRight className="w-5 h-5 text-black" />
+                  </button>
+                </div>
               </div>
-            </motion.div>
-          );
-        })}
+            )}
+          </div>
+        </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }

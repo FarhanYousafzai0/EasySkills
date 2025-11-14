@@ -1,18 +1,29 @@
 import Leaderboard from "@/app/models/Leaderboard";
+import Student from "@/app/models/AddStudent";
 import { connectDB } from "@/lib/mongodb";
 
 export async function GET() {
   try {
     await connectDB();
 
+    // fetch leaderboard entries
+    const list = await Leaderboard.find().sort({ points: -1 });
 
-    const leaderboard = await Leaderboard.find()
-      .sort({ points: -1 }) // Highest points first
-      .limit(200); // Safety limit (you can increase if needed)
+    // attach student names
+    const withNames = await Promise.all(
+      list.map(async (entry) => {
+        const student = await Student.findOne({ clerkId: entry.userId }).select("name");
+
+        return {
+          ...entry.toObject(),
+          name: student?.name || "Unknown",
+        };
+      })
+    );
 
     return Response.json({
       success: true,
-      data: leaderboard,
+      data: withNames,
     });
 
   } catch (error) {
