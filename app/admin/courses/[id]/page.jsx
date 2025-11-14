@@ -428,14 +428,91 @@ export default function AdminCourseBuilderPage() {
   };
 
   /* ─────────────────────── Render ─────────────────────── */
-
   if (loading || !course) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh] bg-slate-950">
-        <Loader2 size={32} className="animate-spin text-[#7866FA]" />
+      <div className="min-h-screen bg-white p-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 animate-pulse">
+    
+        {/* LEFT: Sidebar Skeleton */}
+        <div className="backdrop-blur-xl rounded-2xl border border-[#e9e6ff] bg-white/60 p-4 shadow-[0_18px_60px_rgba(147,128,253,0.15)]">
+    
+          {/* Course Header Skeleton */}
+          <div className="flex items-center gap-4 mb-4 border-b border-[#e9e6ff] pb-4">
+            <div className="w-14 h-14 rounded-xl bg-[#9380FD]/20" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-28 rounded bg-[#9380FD]/30" />
+              <div className="h-3 w-40 rounded bg-[#7866FA]/25" />
+            </div>
+          </div>
+    
+          {/* Sections Skeleton */}
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl p-4 border border-[#e9e6ff]/60 bg-white/70 shadow-sm"
+              >
+                <div className="h-3 w-3/4 rounded bg-[#9380FD]/25 mb-2" />
+                <div className="h-3 w-1/2 rounded bg-[#7866FA]/20" />
+              </div>
+            ))}
+    
+            {/* Add Section Skeleton */}
+            <div className="rounded-xl p-3 border border-dashed border-[#9380FD]/50 bg-[#f5f2ff]">
+              <div className="h-3 w-24 bg-[#9380FD]/40 rounded" />
+            </div>
+          </div>
+        </div>
+    
+        {/* RIGHT: Video + Form Skeleton */}
+        <div className="backdrop-blur-xl rounded-2xl border border-[#e9e6ff] bg-white/60 p-6 shadow-[0_22px_70px_rgba(147,128,253,0.20)]">
+    
+          {/* Video Player Skeleton */}
+          <div className="w-full aspect-video rounded-2xl bg-[#9380FD]/20 border border-[#e9e6ff] mb-6" />
+    
+          {/* Form Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    
+            {/* LEFT FORM */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="h-3 w-24 bg-[#9380FD]/30 rounded" />
+                <div className="h-10 bg-[#f0ecff] rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-36 bg-[#9380FD]/30 rounded" />
+                <div className="h-20 bg-[#f0ecff] rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-28 bg-[#9380FD]/30 rounded" />
+                <div className="h-10 bg-[#f0ecff] rounded-xl" />
+              </div>
+            </div>
+    
+            {/* RIGHT FORM */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="h-3 w-40 bg-[#9380FD]/30 rounded" />
+                <div className="h-10 bg-[#f0ecff] rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-44 bg-[#9380FD]/30 rounded" />
+                <div className="h-10 bg-[#f0ecff] rounded-xl" />
+              </div>
+    
+              {/* Save button skeleton */}
+              <div className="h-12 bg-gradient-to-r from-[#9380FD]/40 to-[#7866FA]/40 rounded-xl" />
+            </div>
+    
+          </div>
+        </div>
       </div>
+    </div>
+    
     );
   }
+  
+  
 
   const totalVideos = sections.reduce(
     (acc, s) => acc + (s.items?.length || 0),
