@@ -2,20 +2,26 @@ import mongoose from "mongoose";
 
 const LeaderboardSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true, unique: true },   // Clerk ID
-    name: { type: String, required: true },                   // Student Name
-    batch: { type: String, required: true },                  // Batch
-    profileImage: { type: String, default: "" },              // For avatars (future use)
+    userId: { type: String, required: true, unique: true }, // Clerk ID
 
-    points: { type: Number, default: 0 },                     // Total Score
-    tasksCompleted: { type: Number, default: 0 },             // Count
+    name: { type: String, required: true },
+
+    batch: { type: String, required: true },
+
+    profileImage: { type: String, default: "" },
+
+    points: { type: Number, default: 0 },
+    tasksCompleted: { type: Number, default: 0 },
 
     lastUpdated: { type: Date, default: Date.now },
+
+    // 🔥 IMPORTANT → prevents expired students from showing
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-// 🔥 Ensures faster sorting when leaderboard grows
+// Indexes for speed
 LeaderboardSchema.index({ points: -1 });
 LeaderboardSchema.index({ batch: 1 });
 LeaderboardSchema.index({ userId: 1 });

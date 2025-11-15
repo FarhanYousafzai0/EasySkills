@@ -19,10 +19,22 @@ import {
   CheckCircle2,
   Package,
   BookOpen,
+  Lock
 } from 'lucide-react';
 
-export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {} }) {
+/*  
+  ❗ access = { allowAccess, lockReason, mentorshipDaysLeft }
+  This component must receive access prop.
+*/
+export default function SidebarStudent({
+  isOpen = false,
+  toggleSidebar = () => {},
+  access = { allowAccess: true, lockReason: null }
+}) {
   const pathname = usePathname();
+
+  /* ------------------------- MENTORSHIP LOCK DETECT ------------------------- */
+  const mentorshipEnded = access.lockReason === "MENTORSHIP_EXPIRED";
 
   /* ------------------------- NAVIGATION SETUP ------------------------- */
   const nav = useMemo(
@@ -33,6 +45,7 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
         name: 'My Tasks',
         base: '/student/task',
         icon: ClipboardList,
+        requiresAccess: true,
         children: [
           { name: 'All Tasks', path: '/student/task' },
           { name: 'Submit Task', path: '/student/task/submit' },
@@ -44,25 +57,25 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
         name: 'Report Issues',
         base: '/student/report',
         icon: MessageSquareWarning,
+        requiresAccess: true,
         children: [
           { name: 'Report Issue', path: '/student/report' },
           { name: 'All Issues', path: '/student/report/allreports' },
         ],
       },
-      { name: 'Leaderboard', path: '/student/leaderboard', icon: BarChart2 },
-      { name: 'Live Sessions', path: '/student/live-sessions', icon: Video },
-      { name: 'Buy Tools', path: '/student/tools', icon: Package },
-      { name: 'Courses', path: '/student/courses', icon: BookOpen },
+
+      { name: 'Leaderboard', path: '/student/leaderboard', icon: BarChart2, requiresAccess: true },
+      { name: 'Live Sessions', path: '/student/live-sessions', icon: Video, requiresAccess: true },
+      { name: 'Buy Tools', path: '/student/tools', icon: Package, requiresAccess: true },
+      { name: 'Courses', path: '/student/courses', icon: BookOpen, requiresAccess: true },
     ],
     []
   );
 
- 
   /* ------------------------- DROPDOWN STATE ------------------------- */
   const [openDropdown, setOpenDropdown] = useState(null);
 
   useEffect(() => {
-    // auto-open dropdown for active route
     nav.forEach((item) => {
       if (item.children && pathname.startsWith(item.base)) {
         setOpenDropdown(item.name);
@@ -71,6 +84,7 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
   }, [pathname, nav]);
 
   const toggleDropdown = (name) => {
+    if (mentorshipEnded) return; // disable dropdown
     setOpenDropdown((prev) => (prev === name ? null : name));
   };
 
@@ -83,6 +97,9 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
   const activeCls = 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md';
   const hoverCls = 'hover:bg-gray-100 text-gray-700';
 
+  const disabledCls =
+    'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400';
+
   /* ------------------------- SIDEBAR BODY ------------------------- */
   const sidebarBody = (
     <div className="flex flex-col justify-between h-full overflow-hidden bg-white ml-4 shadow-xl w-72 md:w-80 rounded-3xl p-6">
@@ -94,6 +111,19 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
         </button>
       </div>
 
+      {/* LOCKED WARNING */}
+      {mentorshipEnded && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 flex items-start gap-3">
+          <Lock className="text-red-600 mt-1" size={20} />
+          <div>
+            <p className="text-sm font-semibold text-red-700">Mentorship Ended</p>
+            <p className="text-xs text-red-600">
+              Please contact admin to renew your mentorship and restore full access.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* MAIN NAV */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
         <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">
@@ -104,28 +134,38 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
           {nav.map((item) => {
             const groupActive = isGroupActive(item.base);
 
-            // DROPDOWN GROUP
+            const isDisabled = mentorshipEnded && item.requiresAccess;
+
             if (item.children) {
               const isOpen = openDropdown === item.name;
 
               return (
                 <div key={item.name}>
+                  {/* DROPDOWN BUTTON */}
                   <button
                     onClick={() => toggleDropdown(item.name)}
+                    disabled={isDisabled}
                     className={`${itemBase} w-full text-left ${
-                      groupActive ? activeCls : hoverCls
+                      isDisabled
+                        ? disabledCls
+                        : groupActive
+                        ? activeCls
+                        : hoverCls
                     }`}
                   >
                     <item.icon size={18} />
                     <span className="flex-1">{item.name}</span>
-                    <ChevronDown
-                      size={18}
-                      className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    />
+                    {!isDisabled && (
+                      <ChevronDown
+                        size={18}
+                        className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    )}
                   </button>
 
+                  {/* CHILDREN */}
                   <AnimatePresence initial={false}>
-                    {isOpen && (
+                    {!isDisabled && isOpen && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -168,22 +208,29 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
 
             // SINGLE LINK
             return (
-              <Link key={item.path} href={item.path} onClick={toggleSidebar}>
-                <motion.div
-                  whileTap={{ scale: 0.97 }}
-                  className={`${itemBase} ${isActive(item.path) ? activeCls : hoverCls}`}
-                >
-                  <item.icon size={18} />
-                  {item.name}
-                </motion.div>
-              </Link>
+              <div key={item.path}>
+                {isDisabled ? (
+                  <div className={`${itemBase} ${disabledCls}`}>
+                    <item.icon size={18} />
+                    {item.name}
+                  </div>
+                ) : (
+                  <Link href={item.path} onClick={toggleSidebar}>
+                    <motion.div
+                      whileTap={{ scale: 0.97 }}
+                      className={`${itemBase} ${
+                        isActive(item.path) ? activeCls : hoverCls
+                      }`}
+                    >
+                      <item.icon size={18} />
+                      {item.name}
+                    </motion.div>
+                  </Link>
+                )}
+              </div>
             );
           })}
         </nav>
-
-      
-       
-       
       </div>
 
       {/* FOOTER */}
@@ -196,10 +243,10 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
   /* ------------------------- WRAPPER ------------------------- */
   return (
     <>
-      {/* Desktop */}
+      {/* DESKTOP */}
       <div className="hidden md:flex mt-5 h-[95vh]">{sidebarBody}</div>
 
-      {/* Mobile Drawer */}
+      {/* MOBILE */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -225,18 +272,3 @@ export default function SidebarStudent({ isOpen = false, toggleSidebar = () => {
     </>
   );
 }
-
-/* 🧭 Optional CSS (global.css or Tailwind config)
-   For smooth vertical scrollbars
-   -------------------------------------------------
-   .custom-scrollbar::-webkit-scrollbar {
-     width: 6px;
-   }
-   .custom-scrollbar::-webkit-scrollbar-thumb {
-     background-color: rgba(120, 102, 250, 0.3);
-     border-radius: 10px;
-   }
-   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-     background-color: rgba(120, 102, 250, 0.6);
-   }
-*/

@@ -6,9 +6,19 @@ export async function POST(req) {
   try {
     await connectDB();
     const body = await req.json();
-    const { name, email, phone, plan, batch, joinDate, notes } = body;
 
-    // ✅ Validation
+    const { 
+      name, 
+      email, 
+      phone, 
+      plan, 
+      batch, 
+      joinDate, 
+      notes,
+      enrolledCourses = [],       // FIXED
+      isEnrolled = false
+    } = body;
+
     if (!name || !email || !plan || !joinDate) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -16,7 +26,6 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Check existing Mongo record
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
       return NextResponse.json(
@@ -25,22 +34,22 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Calculate mentorship details
     const join = new Date(joinDate);
     const duration = plan === "1-on-1 Mentorship" ? 30 : 45;
+
     const mentorshipStart = join;
-    const mentorshipEnd = new Date(
-      join.getTime() + duration * 24 * 60 * 60 * 1000
-    );
+    const mentorshipEnd = new Date(join.getTime() + duration * 86400000);
+
     const mentorshipDaysLeft = Math.max(
       0,
-      Math.ceil((mentorshipEnd - new Date()) / (1000 * 60 * 60 * 24))
+      Math.ceil((mentorshipEnd - new Date()) / 86400000)
     );
+
+    const isMentorshipActive = mentorshipDaysLeft > 0;
 
     let clerkUserId = null;
     let invitationLink = "";
 
-    // ✅ 1️⃣ Try to create user in Clerk
     const clerkResponse = await fetch("https://api.clerk.dev/v1/users", {
       method: "POST",
       headers: {
@@ -55,29 +64,27 @@ export async function POST(req) {
           role: "student",
           batch: batch || "Unassigned",
           plan,
-          progress: 0,
-          totalTasks: 0,
-          tasksCompleted: 0,
-          issuesReported: 0,
+          enrolledCourses,        // FIXED
+          isEnrolled,
+          isMentorshipActive,
           mentorshipStart,
           mentorshipEnd,
           mentorshipDaysLeft,
+          progress: 0,
+          totalTasks: 0,
+          tasksCompleted: 0,
+          issuesReported: 0
         },
       }),
     });
 
-    const clerkUser = await clerkResponse.json();
+    const clerkData = await clerkResponse.json();
 
-    if (clerkResponse.ok && clerkUser.id) {
-      clerkUserId = clerkUser.id;
-      console.log("✅ Clerk user created:", clerkUser.id);
-    } else if (
-      clerkUser.errors?.[0]?.code === "form_identifier_exists" ||
-      clerkUser.errors?.[0]?.message?.includes("taken")
-    ) {
-      // 🔁 Fetch existing user instead
-      const existing = await fetch(
-        `https://api.clerk.dev/v1/users?email_address=${encodeURIComponent(email)}`,
+    if (clerkResponse.ok && clerkData.id) {
+      clerkUserId = clerkData.id;
+    } else if (clerkData?.errors?.[0]?.code === "form_identifier_exists") {
+      const findExisting = await fetch(
+        `https://api.clerk.dev/v1/users?email_address=${email}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
@@ -85,46 +92,53 @@ export async function POST(req) {
           },
         }
       );
-      const data = await existing.json();
-      if (Array.isArray(data) && data.length > 0) {
-        clerkUserId = data[0].id;
-        console.log("ℹ️ Clerk user already exists:", clerkUserId);
-      } else {
-        throw new Error("Failed to fetch existing Clerk user.");
-      }
-    } else {
-      console.error("❌ Clerk user creation failed:", clerkUser);
-      throw new Error("Failed to create user in Clerk");
-    }
 
-    // ✅ 2️⃣ Attempt invitation (only if new user was created)
-    if (clerkResponse.ok && clerkUser.id) {
-      try {
-        const inviteResponse = await fetch("https://api.clerk.dev/v1/invitations", {
-          method: "POST",
+      const findData = await findExisting.json();
+      if (Array.isArray(findData) && findData.length > 0) {
+        clerkUserId = findData[0].id;
+
+        await fetch(`https://api.clerk.dev/v1/users/${clerkUserId}/metadata`, {
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email_address: email,
-            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
+            public_metadata: {
+              role: "student",
+              batch: batch || "Unassigned",
+              plan,
+              enrolledCourses,    // FIXED
+              isEnrolled,
+              isMentorshipActive,
+              mentorshipStart,
+              mentorshipEnd,
+              mentorshipDaysLeft
+            },
           }),
         });
-
-        const inviteData = await inviteResponse.json();
-        if (inviteResponse.ok) {
-          invitationLink = inviteData.url || "";
-          console.log("📧 Invitation sent:", invitationLink);
-        } else {
-          console.warn("⚠️ Invitation skipped:", inviteData.errors?.[0]?.message);
-        }
-      } catch (e) {
-        console.warn("⚠️ Invitation request failed:", e.message);
       }
     }
 
-    // ✅ 3️⃣ Save to MongoDB
+    if (clerkUserId && clerkResponse.ok) {
+      const inviteRes = await fetch("https://api.clerk.dev/v1/invitations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_address: email,
+          redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
+        }),
+      });
+
+      const invite = await inviteRes.json();
+      if (inviteRes.ok) {
+        invitationLink = invite.url;
+      }
+    }
+
     const student = await Student.create({
       clerkId: clerkUserId,
       name,
@@ -134,10 +148,9 @@ export async function POST(req) {
       batch: batch || "Unassigned",
       joinDate,
       notes,
-      progress: 0,
-      totalTasks: 0,
-      tasksCompleted: 0,
-      issuesReported: 0,
+      enrolledCourses,        
+      isEnrolled,
+      isMentorshipActive,
       mentorshipStart,
       mentorshipEnd,
       mentorshipDaysLeft,
@@ -156,19 +169,22 @@ export async function POST(req) {
       {
         success: true,
         message: "Student added successfully!",
-        invitationLink: invitationLink || null,
-        data: student,
+        invitationLink,
+        data: student
       },
       { status: 201 }
     );
+
   } catch (err) {
-    console.error("❌ Error creating student:", err);
+    console.error(err);
     return NextResponse.json(
       { success: false, message: err.message },
       { status: 500 }
     );
   }
 }
+
+
 
 export async function GET() {
   try {

@@ -2,47 +2,96 @@ import mongoose from "mongoose";
 
 const StudentSchema = new mongoose.Schema(
   {
+    // ============================
+    // 🔐 AUTH & IDENTIFIERS
+    // ============================
     clerkId: {
       type: String,
       required: true,
       unique: true,
       trim: true,
     },
+
     name: {
       type: String,
-      required: [true, "Name is required"],
+      required: true,
       trim: true,
     },
+
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: true,
       unique: true,
-      trim: true,
       lowercase: true,
+      trim: true,
     },
-    phone: { type: String, trim: true, default: "" },
+
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // ============================
+    // 🎓 LEARNING PLAN
+    // ============================
     plan: {
       type: String,
-      required: [true, "Plan is required"],
+      required: true,
       enum: ["1-on-1 Mentorship", "Group Mentorship"],
     },
-    batch: { type: String, default: "Unassigned" },
-    joinDate: { type: Date, required: [true, "Join Date is required"] },
-    notes: { type: String, trim: true, default: "" },
 
-    // ✅ mentorship tracking
-    mentorshipStart: { type: Date },
-    mentorshipEnd: { type: Date },
-    mentorshipDaysLeft: { type: Number },
+    batch: {
+      type: String,
+      default: "Unassigned",
+    },
 
-    // analytics & tracking
-    progress: { type: Number, default: 0 },
-    totalTasks: { type: Number, default: 0 },
-    tasksCompleted: { type: Number, default: 0 },
-    issuesReported: { type: Number, default: 0 },
+    joinDate: {
+      type: Date,
+      required: true,
+    },
 
-    // ✅ NEW field for leaderboard scoring
-    totalScore: { type: Number, default: 0 },
+    notes: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // ============================
+    // 📘 COURSE ENROLLMENT SYSTEM
+    // ============================
+    isEnrolled: {
+      type: Boolean,
+      default: false, // Admin decides
+    },
+
+    enrolledCourses: {
+      type: [String], // store course IDs
+      default: [],
+    },
+
+    // ============================
+    // 🕒 MENTORSHIP LIFECYCLE
+    // ============================
+    mentorshipStart: {
+      type: Date,
+      default: null,
+    },
+
+    mentorshipEnd: {
+      type: Date,
+      default: null,
+    },
+
+    mentorshipDaysLeft: {
+      type: Number,
+      default: 0,
+    },
+
+    isMentorshipActive: {
+      type: Boolean,
+      default: true,
+    },
 
     mentorships: {
       type: [
@@ -55,11 +104,37 @@ const StudentSchema = new mongoose.Schema(
       ],
       default: [],
     },
+
+    // ============================
+    // 📊 ANALYTICS & PROGRESS
+    // ============================
+    progress: {
+      type: Number,
+      default: 0,
+    },
+
+    totalTasks: {
+      type: Number,
+      default: 0,
+    },
+
+    tasksCompleted: {
+      type: Number,
+      default: 0,
+    },
+
+    issuesReported: {
+      type: Number,
+      default: 0,
+    },
+
+    totalScore: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
-const Student =
-  mongoose.models.Student || mongoose.model("Student", StudentSchema);
-
-export default Student;
+export default mongoose.models.Student ||
+  mongoose.model("Student", StudentSchema);
