@@ -62,13 +62,14 @@ const StudentSchema = new mongoose.Schema(
     // ============================
     isEnrolled: {
       type: Boolean,
-      default: false, // Admin decides
+      default: false,
     },
 
-    enrolledCourses: {
-      type: [String], // store course IDs
-      default: [],
-    },
+    // ✅ FIXED: More explicit array definition
+    enrolledCourses: [{
+      type: String,
+      trim: true
+    }],
 
     // ============================
     // 🕒 MENTORSHIP LIFECYCLE
@@ -93,17 +94,12 @@ const StudentSchema = new mongoose.Schema(
       default: true,
     },
 
-    mentorships: {
-      type: [
-        {
-          plan: String,
-          start: Date,
-          end: Date,
-          daysLeft: Number,
-        },
-      ],
-      default: [],
-    },
+    mentorships: [{
+      plan: String,
+      start: Date,
+      end: Date,
+      daysLeft: Number,
+    }],
 
     // ============================
     // 📊 ANALYTICS & PROGRESS
@@ -132,9 +128,22 @@ const StudentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    // ✅ ADDED: Missing field from your API
+    inviteLink: {
+      type: String,
+      default: "",
+    },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+    strict: true // ✅ Enforce schema strictly
+  }
 );
+
+// ✅ Add indexes for better query performance
+StudentSchema.index({ email: 1 });
+StudentSchema.index({ clerkId: 1 });
 
 export default mongoose.models.Student ||
   mongoose.model("Student", StudentSchema);
