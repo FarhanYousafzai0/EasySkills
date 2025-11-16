@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import Nav from "@/components/Nav";
 
 /* ─────────────────────────────────────────────── */
-/*  DYNAMIC SKELETON CARD (BIGGER VERSION)         */
+/*  DYNAMIC SKELETON CARD                          */
 /* ─────────────────────────────────────────────── */
 function SkeletonCard() {
   return (
@@ -26,22 +26,16 @@ function SkeletonCard() {
       </div>
 
       <div className="mt-5 space-y-4">
-
-        {/* Title */}
         <div className="h-5 w-4/5 bg-[#ece8ff] rounded" />
-
-        {/* Description lines */}
         <div className="h-4 w-full bg-[#ece8ff] rounded" />
         <div className="h-4 w-5/6 bg-[#ece8ff] rounded" />
 
-        {/* Progress Bar */}
         <div className="mt-4">
           <div className="h-2.5 w-full bg-[#e6e0ff]/50 rounded-full overflow-hidden">
             <div className="h-full w-1/4 bg-gradient-to-r from-[#9380FD]/20 to-[#7866FA]/20" />
           </div>
         </div>
 
-        {/* Button */}
         <div className="h-12 w-full bg-gradient-to-r from-[#9380FD]/20 to-[#7866FA]/20 rounded-xl" />
       </div>
     </div>
@@ -49,7 +43,7 @@ function SkeletonCard() {
 }
 
 /* ─────────────────────────────────────────────── */
-/*  SKELETON PAGE WITH DYNAMIC COUNT               */
+/*  SKELETON PAGE WRAPPER                          */
 /* ─────────────────────────────────────────────── */
 function StudentCoursesSkeleton({ count }) {
   const skeletons = Array(count).fill(0);
@@ -60,7 +54,6 @@ function StudentCoursesSkeleton({ count }) {
       <div className="min-h-screen mt-20 px-4 py-6 md:px-8 md:py-10 bg-white">
         <div className="max-w-6xl mx-auto">
 
-          {/* Header Skeleton */}
           <div className="flex items-center gap-4 mb-10 animate-pulse">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-[#9380FD]/25 to-[#7866FA]/25 h-12 w-12" />
             <div className="space-y-3">
@@ -69,7 +62,6 @@ function StudentCoursesSkeleton({ count }) {
             </div>
           </div>
 
-          {/* Skeleton grid */}
           <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
             {skeletons.map((_, i) => (
               <SkeletonCard key={i} />
@@ -83,26 +75,31 @@ function StudentCoursesSkeleton({ count }) {
 }
 
 /* ─────────────────────────────────────────────── */
-/*  MAIN PAGE                                      */
+/*  MAIN COMPONENT                                  */
 /* ─────────────────────────────────────────────── */
 export default function StudentCoursesPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
 
   const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  /* ─────────────────── Fetch Courses ─────────────────── */
+  /* Fetch Courses */
   const fetchCourses = async (clerkId) => {
-    setLoading(true);
     try {
       const res = await fetch(`/api/student/courses?clerkId=${clerkId}`, {
         cache: "no-store",
       });
+
+      if (!res.ok) throw new Error("Failed to fetch courses.");
+
       const data = await res.json();
 
-      if (data.success) setCourses(data.data || data.courses || []);
-      else toast.error(data.message || "Error fetching courses");
+      if (data.success) {
+        setCourses(data.data || []);
+      } else {
+        toast.error(data.message || "Error fetching courses");
+      }
     } catch (err) {
       console.error(err);
       toast.error("Server error fetching courses");
@@ -113,25 +110,28 @@ export default function StudentCoursesPage() {
 
   useEffect(() => {
     if (!isLoaded) return;
+
     if (!user) {
       toast.error("You must be signed in to view your courses.");
       router.push("/sign-in");
       return;
     }
+
     fetchCourses(user.id);
   }, [isLoaded, user?.id, router]);
 
-  /* ─────────────────── Show Skeleton ─────────────────── */
-
+  /* Loading Skeleton */
   if (!isLoaded || loading) {
     return (
       <StudentCoursesSkeleton
-        count={courses.length === 0 ? 1 : courses.length} // ⭐ EXACT COUNT YOU WANTED
+        count={courses.length === 0 ? 3 : courses.length}
       />
     );
   }
 
-  /* ─────────────────── REAL PAGE ─────────────────── */
+  /* ─────────────────────────────────────────────── */
+  /*  MAIN PAGE (REAL CONTENT)                       */
+  /* ─────────────────────────────────────────────── */
   return (
     <>
       <Nav />
@@ -147,9 +147,7 @@ export default function StudentCoursesPage() {
               </div>
 
               <div>
-                <h1 className="text-3xl font-semibold text-black">
-                  My Courses
-                </h1>
+                <h1 className="text-3xl font-semibold text-black">My Courses</h1>
                 <p className="text-sm text-slate-500 mt-1">
                   Continue exactly where you left off.
                 </p>
@@ -193,7 +191,6 @@ export default function StudentCoursesPage() {
                     whileHover={{ y: -5, scale: 1.01 }}
                     className="bg-white/90 backdrop-blur-xl rounded-2xl border border-[#e9e6ff] shadow-[0_18px_45px_rgba(147,128,253,0.25)] overflow-hidden flex flex-col"
                   >
-                    {/* Thumbnail */}
                     <div className="relative h-48 w-full overflow-hidden p-4">
                       <img
                         src={course.thumbnailUrl}
@@ -201,14 +198,12 @@ export default function StudentCoursesPage() {
                         className="w-full h-full object-cover rounded-xl"
                       />
 
-                      {/* Access Till */}
                       {course.accessTill && (
                         <div className="absolute top-4 left-4 px-3 py-1 text-[11px] font-semibold rounded-full bg-white/80 backdrop-blur border border-[#e9e6ff]">
                           Access till {new Date(course.accessTill).toLocaleDateString()}
                         </div>
                       )}
 
-                      {/* Duration Label */}
                       {course.durationLabel && (
                         <div className="absolute bottom-4 right-4 px-3 py-1 text-[11px] font-semibold rounded-full bg-white/80 backdrop-blur border border-[#e9e6ff]">
                           {course.durationLabel}
@@ -216,7 +211,6 @@ export default function StudentCoursesPage() {
                       )}
                     </div>
 
-                    {/* Body */}
                     <div className="p-5 flex flex-col flex-1">
                       <h3 className="font-semibold text-slate-800 text-base mb-2 line-clamp-2 leading-snug">
                         {course.title}
@@ -226,7 +220,6 @@ export default function StudentCoursesPage() {
                         {course.description}
                       </p>
 
-                      {/* Progress */}
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm font-semibold text-slate-700">
@@ -245,7 +238,6 @@ export default function StudentCoursesPage() {
                         </div>
                       </div>
 
-                      {/* Button */}
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => router.push(`/courses/${course._id}`)}

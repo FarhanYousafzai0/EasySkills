@@ -61,13 +61,11 @@ export default function AddStudent() {
     try {
       setLoading(true);
 
-      // ✅ CRITICAL FIX: Auto-set isEnrolled based on selected courses
+      // Auto-set isEnrolled based on selected courses
       const submissionData = {
         ...form,
-        isEnrolled: form.enrolledCourses.length > 0, // Automatically set to true if courses selected
+        isEnrolled: form.enrolledCourses.length > 0,
       };
-
-      console.log('📤 Submitting data:', submissionData);
 
       const res = await fetch('/api/admin/student', {
         method: 'POST',
@@ -78,9 +76,7 @@ export default function AddStudent() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
 
-      console.log('✅ Response:', data);
-
-      // ✅ Enhanced success messages with email status
+      // Success Message
       if (data.emailSent) {
         toast.success(
           <div className="flex items-center gap-3">
@@ -90,11 +86,6 @@ export default function AddStudent() {
               <p className="text-sm text-gray-600 mt-1">
                 📧 Invitation email sent to <strong>{form.email}</strong>
               </p>
-              {data.data?.isEnrolled && (
-                <p className="text-xs text-green-600 mt-1">
-                  ✓ Enrolled in {data.data.enrolledCourses.length} course(s)
-                </p>
-              )}
             </div>
           </div>,
           { duration: 6000 }
@@ -108,23 +99,13 @@ export default function AddStudent() {
               <p className="text-sm text-gray-600 mt-1">
                 ⚠️ Email sending failed: {data.emailError || 'Unknown error'}
               </p>
-              {data.invitationLink && (
-                <p className="text-xs text-blue-600 mt-1">
-                  Check console for invitation link
-                </p>
-              )}
             </div>
           </div>,
           { duration: 8000 }
         );
-
-        // Log invitation link for manual sending
-        if (data.invitationLink) {
-          console.log('📧 INVITATION LINK (send manually):', data.invitationLink);
-        }
       }
 
-      // Reset form
+      // Reset
       setForm({
         name: '',
         email: '',
@@ -136,7 +117,6 @@ export default function AddStudent() {
       });
       setShowCourses(false);
     } catch (err) {
-      console.error('❌ Error:', err);
       toast.error(err.message || 'Error adding student.');
     } finally {
       setLoading(false);
@@ -165,9 +145,7 @@ export default function AddStudent() {
             <UserPlus className="text-[#9380FD]" />
             Add New Student
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Create a new student account and send invitation email
-          </p>
+          <p className="text-sm text-gray-600 mt-1">Create a new student account and send invitation email</p>
         </div>
 
         {currentPlan && (
@@ -181,25 +159,24 @@ export default function AddStudent() {
       {/* Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Inputs */}
-        {[
-          { key: 'name', label: 'Full Name', type: 'text', required: true },
+        {[{ key: 'name', label: 'Full Name', type: 'text', required: true },
           { key: 'email', label: 'Email Address', type: 'email', required: true },
-          { key: 'phone', label: 'Phone Number', type: 'text', required: false },
-        ].map(({ key, label, type, required }) => (
-          <div key={key}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              type={type}
-              value={form[key]}
-              required={required}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition"
-              placeholder={`Enter ${label.toLowerCase()}`}
-            />
-          </div>
-        ))}
+          { key: 'phone', label: 'Phone Number', type: 'text', required: false }].map(
+          ({ key, label, type, required }) => (
+            <div key={key}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {label} {required && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type={type}
+                value={form[key]}
+                required={required}
+                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition"
+              />
+            </div>
+          )
+        )}
 
         {/* Mentorship Plan */}
         <div>
@@ -210,7 +187,7 @@ export default function AddStudent() {
             value={form.plan}
             required
             onChange={(e) => setForm({ ...form, plan: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition bg-white"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 bg-white"
           >
             <option value="">Select Mentorship Plan</option>
             {plans.map((p) => (
@@ -221,20 +198,17 @@ export default function AddStudent() {
           </select>
         </div>
 
-        {/* Batch */}
+        {/* Batch (ALWAYS ENABLED now) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Assign Batch
           </label>
           <select
             value={form.batch}
-            disabled={form.plan === '1-on-1 Mentorship'}
             onChange={(e) => setForm({ ...form, batch: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition bg-white disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 bg-white"
           >
-            <option value="">
-              {form.plan === '1-on-1 Mentorship' ? 'Not applicable for 1-on-1' : 'Select Batch'}
-            </option>
+            <option value="">Select Batch</option>
             {batches.map((b) => (
               <option key={b._id} value={b.title}>
                 {b.title}
@@ -253,7 +227,7 @@ export default function AddStudent() {
             value={form.joinDate}
             required
             onChange={(e) => setForm({ ...form, joinDate: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20"
           />
           {endDate && (
             <p className="text-xs mt-2 text-gray-600 flex items-center gap-1">
@@ -275,7 +249,7 @@ export default function AddStudent() {
           <button
             type="button"
             onClick={() => setShowCourses(!showCourses)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white flex justify-between items-center hover:border-[#9380FD] transition focus:outline-none focus:ring-2 focus:ring-[#9380FD]/20"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white flex justify-between items-center hover:border-[#9380FD]"
           >
             <span className="text-gray-700 flex items-center gap-2">
               {form.enrolledCourses.length > 0 ? (
@@ -292,9 +266,7 @@ export default function AddStudent() {
               )}
             </span>
             <ChevronDown
-              className={`h-5 w-5 text-gray-600 transition-transform ${
-                showCourses ? 'rotate-180' : ''
-              }`}
+              className={`h-5 w-5 text-gray-600 transition-transform ${showCourses ? 'rotate-180' : ''}`}
             />
           </button>
 
@@ -328,12 +300,8 @@ export default function AddStudent() {
                           }`}
                         >
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold text-gray-800 flex-1">
-                              {course.title}
-                            </h4>
-                            {selected && (
-                              <CheckCircle size={18} className="text-[#7866FA] flex-shrink-0 ml-2" />
-                            )}
+                            <h4 className="font-semibold text-gray-800 flex-1">{course.title}</h4>
+                            {selected && <CheckCircle size={18} className="text-[#7866FA] ml-2" />}
                           </div>
                           <p className="text-sm text-gray-600 line-clamp-2">
                             {course.description || 'No description available'}
@@ -356,7 +324,7 @@ export default function AddStudent() {
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
             disabled={loading}
-            className="bg-gradient-to-r from-[#9380FD] cursor-pointer to-[#7866FA] text-white px-8 py-3 rounded-xl shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="bg-gradient-to-r cursor-pointer from-[#9380FD] to-[#7866FA] text-white px-8 py-3 rounded-xl shadow-lg flex items-center gap-2 disabled:opacity-50"
           >
             {loading ? (
               <>
@@ -366,7 +334,7 @@ export default function AddStudent() {
             ) : (
               <>
                 <UserPlus size={20} />
-                Add Student & Send Invitation
+                Add Student 
               </>
             )}
           </motion.button>

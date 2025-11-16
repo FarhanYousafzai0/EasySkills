@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} font-sans antialiased`}
         >
-           <ClerkProvider >
+           <ClerkProvider  signUp={{ enabled: false }} >
           {children}
           </ClerkProvider>
           <Toaster />

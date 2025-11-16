@@ -67,7 +67,7 @@ export default function SidebarStudent({
       { name: 'Leaderboard', path: '/student/leaderboard', icon: BarChart2, requiresAccess: true },
       { name: 'Live Sessions', path: '/student/live-sessions', icon: Video, requiresAccess: true },
       { name: 'Buy Tools', path: '/student/tools', icon: Package, requiresAccess: true },
-      { name: 'Courses', path: '/student/courses', icon: BookOpen, requiresAccess: true },
+     
     ],
     []
   );
@@ -104,12 +104,14 @@ export default function SidebarStudent({
   const sidebarBody = (
     <div className="flex flex-col justify-between h-full overflow-hidden bg-white ml-4 shadow-xl w-72 md:w-80 rounded-3xl p-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-8">
+    <Link href="/">
+    <div className="flex items-center justify-between mb-8">
         <Image src="/Logo.svg" alt="LMS Logo" width={140} height={36} priority />
         <button className="md:hidden" onClick={toggleSidebar}>
           <X size={22} className="text-gray-700" />
         </button>
       </div>
+    </Link>
 
       {/* LOCKED WARNING */}
       {mentorshipEnded && (
