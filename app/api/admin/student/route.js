@@ -75,7 +75,7 @@ async function sendInvitationEmail(name, email, plan, batch, duration, mentorshi
   `;
 
   try {
-    console.log('📧 Sending invitation email to:', email);
+    
 
     const transporter = createTransporter();
     await transporter.verify();
@@ -88,10 +88,9 @@ async function sendInvitationEmail(name, email, plan, batch, duration, mentorshi
       html: emailHTML,
     });
 
-    console.log('✅ Invitation email sent! Message ID:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Invitation email failed:', error.message);
+    
     return { success: false, error: error.message };
   }
 }
@@ -159,7 +158,7 @@ async function sendWelcomeBackEmail(name, email, plan, batch, duration, mentorsh
 
     const transporter = createTransporter();
     await transporter.verify();
-    console.log('✅ Transporter verified');
+    
 
     const info = await transporter.sendMail({
       from: `"Your Platform" <${process.env.EMAIL_USER}>`,
@@ -168,7 +167,7 @@ async function sendWelcomeBackEmail(name, email, plan, batch, duration, mentorsh
       html: emailHTML,
     });
 
-    console.log('✅ Welcome back email sent! Message ID:', info.messageId);
+  
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Welcome back email failed:', error.message);
@@ -237,8 +236,6 @@ export async function POST(req) {
     // ✅ Auto-set isEnrolled based on courses
     const finalIsEnrolled = courseIds.length > 0 ? true : isEnrolled;
 
-    console.log('📚 Enrolled Courses:', courseIds);
-    console.log('✅ isEnrolled:', finalIsEnrolled);
 
     let clerkUserId = null;
     let invitationLink = "";
@@ -316,7 +313,7 @@ export async function POST(req) {
             },
           }),
         });
-        console.log('✅ Updated existing Clerk user metadata');
+        
       }
     }
 
@@ -353,7 +350,7 @@ export async function POST(req) {
           
         } else if (invite?.errors?.[0]?.code === 'form_identifier_exists') {
           // ✅ EXISTING USER - Send welcome back
-          console.log('⚠️ User already has Clerk account, sending welcome email...');
+          
           
           invitationLink = `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`;
           
@@ -366,11 +363,11 @@ export async function POST(req) {
           emailError = emailResult.error;
           
         } else {
-          console.error('❌ Invitation creation failed:', invite);
+          
           emailError = 'Invitation creation failed';
         }
       } catch (inviteError) {
-        console.error('❌ Invitation error:', inviteError);
+      
         emailError = inviteError.message;
       }
     }
