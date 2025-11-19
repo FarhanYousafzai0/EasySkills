@@ -131,7 +131,7 @@ export default function DashboardStudent() {
   ================================= */
   const cards = [
     {
-      title: "Mentorship Days Left",
+      title: "Course Days Left",
       value: access.mentorshipDaysLeft,
       sub: data.mentorshipEndDate
         ? `Ends on ${new Date(data.mentorshipEndDate).toLocaleDateString()}`

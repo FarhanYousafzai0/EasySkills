@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Wrench, ExternalLink, MessageCircle } from "lucide-react";
+import { Loader2, Wrench, ExternalLink, MessageCircleHeart } from "lucide-react";
 import { toast } from "sonner";
 
 export default function StudentToolsPage() {
@@ -15,7 +15,9 @@ export default function StudentToolsPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/admin/tools${category && category !== "All" ? `?category=${category}` : ""}`
+        `/api/admin/tools${
+          category && category !== "All" ? `?category=${category}` : ""
+        }`
       );
       const data = await res.json();
       if (data.success) {
@@ -41,12 +43,11 @@ export default function StudentToolsPage() {
   const truncate = (text, len = 100) =>
     text.length <= len ? text : `${text.substring(0, len)}...`;
 
-  // 🔗 Your Admin WhatsApp Number (No +, No spaces)
-  const adminWhatsApp = "923001234567"; // Example: Pakistan format -> 92XXXXXXXXXX
+  const adminWhatsApp = "923001234567";
 
   const handleWhatsAppClick = (tool) => {
     const message = encodeURIComponent(
-      `Hello! 👋 I’m interested in the tool *${tool.name}* (Price: $${tool.price}). Could you please share more details?`
+      `Hello! I'm interested in the tool "${tool.name}" (Price: $${tool.price}). Could you please share more details?`
     );
     const url = `https://wa.me/${adminWhatsApp}?text=${message}`;
     window.open(url, "_blank");
@@ -65,7 +66,7 @@ export default function StudentToolsPage() {
               Explore Tools
             </h1>
             <p className="text-gray-500 mt-1">
-              Browse premium tools curated by our admins for your growth.
+              Browse premium YouTube Automation tools and resources curated to help you scale faster.
             </p>
           </div>
         </div>
@@ -125,7 +126,6 @@ export default function StudentToolsPage() {
                         alt={tool.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
                 )}
@@ -137,6 +137,7 @@ export default function StudentToolsPage() {
                   </h3>
 
                   <div className="mt-2 text-sm text-gray-600 leading-relaxed flex-grow">
+                    {/* Improved Description */}
                     {expandedDescriptions[tool._id]
                       ? tool.description
                       : truncate(tool.description)}
@@ -183,12 +184,11 @@ export default function StudentToolsPage() {
                     className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold shadow hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <MessageCircle size={17} /> Contact on WhatsApp
+                      <MessageCircleHeart size={17} /> Contact on WhatsApp
                     </div>
                   </motion.button>
                 </div>
 
-                {/* Border Glow */}
                 <div className="absolute inset-0 border-2 border-transparent hover:border-[#9380FD]/20 rounded-2xl transition-all duration-300 pointer-events-none" />
               </motion.div>
             ))}

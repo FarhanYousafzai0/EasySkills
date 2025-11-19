@@ -15,31 +15,26 @@ export default function NewIssuePage() {
   });
   const [uploading, setUploading] = useState(false);
 
-  // 🧠 Handle text fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 📂 Handle multiple file selection
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     setForm((prev) => ({ ...prev, files }));
   };
 
-  // 🚀 Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!user?.id) return toast.error('User not authenticated.');
     if (!form.title.trim() || !form.description.trim())
-      return toast.error('Please fill all required fields.');
+      return toast.error('Please complete all required fields.');
 
     try {
       setUploading(true);
-     
 
-      // 1️⃣ Upload all images to Cloudinary in parallel
       const uploadedImages = await Promise.all(
         form.files.map(async (file) => {
           const data = new FormData();
@@ -55,7 +50,7 @@ export default function NewIssuePage() {
           );
 
           if (!uploadRes.ok) {
-            console.error('❌ Cloudinary upload failed:', await uploadRes.text());
+            console.error('Cloudinary upload failed:', await uploadRes.text());
             throw new Error('Cloudinary upload failed');
           }
 
@@ -68,7 +63,6 @@ export default function NewIssuePage() {
         })
       );
 
-      // 2️⃣ Send metadata to backend
       const res = await fetch('/api/student/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,14 +77,14 @@ export default function NewIssuePage() {
       const result = await res.json();
 
       if (result.success) {
-        toast.success('Issue submitted successfully!');
+        toast.success('Your issue has been submitted successfully.');
         setForm({ title: '', description: '', files: [] });
       } else {
-        toast.error(result.message || 'Failed to submit issue.');
+        toast.error(result.message || 'Failed to submit your issue.');
       }
     } catch (err) {
-      console.error(' Error submitting issue:', err);
-      toast.error('Server error while submitting issue.');
+      console.error('Error submitting issue:', err);
+      toast.error('A server error occurred while submitting your issue.');
     } finally {
       setUploading(false);
     }
@@ -99,10 +93,11 @@ export default function NewIssuePage() {
   return (
     <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-        Report a New Issue
+        Report an Issue
       </h1>
+
       <p className="text-gray-600 mb-6 text-center">
-        Describe the problem you’re facing in detail. Our admin will review and respond soon.
+        Clearly describe the issue you’re experiencing. Our team will review your report and get back to you as soon as possible.
       </p>
 
       <motion.form
@@ -113,11 +108,11 @@ export default function NewIssuePage() {
       >
         {/* Title */}
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Title</label>
+          <label className="block text-gray-700 font-medium mb-2">Report an issue</label>
           <input
             type="text"
             name="title"
-            placeholder="Enter issue title"
+            placeholder="Enter a brief title for the issue"
             value={form.title}
             onChange={handleChange}
             required
@@ -127,11 +122,13 @@ export default function NewIssuePage() {
 
         {/* Description */}
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Description</label>
+          <label className="block text-gray-700 font-medium mb-2">
+            Tell us about the issue
+          </label>
           <textarea
             name="description"
             rows={4}
-            placeholder="Describe the issue in detail..."
+            placeholder="Provide a clear and detailed description of the issue..."
             value={form.description}
             onChange={handleChange}
             required
@@ -139,13 +136,15 @@ export default function NewIssuePage() {
           />
         </div>
 
-        {/* Upload Multiple Screenshots */}
+        {/* Screenshots */}
         <div>
           <label className="block text-gray-700 font-medium mb-2">
             Upload Screenshot(s) (optional)
           </label>
+
           <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center hover:border-[#9380FD] transition">
             <UploadCloud size={28} className="text-[#7866FA] mb-2" />
+
             <input
               type="file"
               id="fileUpload"
@@ -153,6 +152,7 @@ export default function NewIssuePage() {
               multiple
               onChange={handleFileChange}
             />
+
             <label
               htmlFor="fileUpload"
               className="text-sm text-gray-600 cursor-pointer"
@@ -172,7 +172,7 @@ export default function NewIssuePage() {
           )}
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={uploading}
@@ -182,7 +182,7 @@ export default function NewIssuePage() {
               : 'bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90'
           }`}
         >
-          {uploading ? 'Uploading...' : 'Submit Issue'}
+          {uploading ? 'Submitting...' : 'Submit Issue'}
         </button>
       </motion.form>
     </div>

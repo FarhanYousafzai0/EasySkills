@@ -40,6 +40,7 @@ export default function SidebarStudent({
   const nav = useMemo(
     () => [
       { name: 'Dashboard', path: '/student', icon: LayoutDashboard },
+      { name: 'Live Sessions', path: '/student/live-sessions', icon: Video, requiresAccess: true },
 
       {
         name: 'My Tasks',
@@ -65,7 +66,7 @@ export default function SidebarStudent({
       },
 
       { name: 'Leaderboard', path: '/student/leaderboard', icon: BarChart2, requiresAccess: true },
-      { name: 'Live Sessions', path: '/student/live-sessions', icon: Video, requiresAccess: true },
+      
       { name: 'Buy Tools', path: '/student/tools', icon: Package, requiresAccess: true },
      
     ],

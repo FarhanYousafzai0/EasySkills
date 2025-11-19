@@ -56,7 +56,6 @@ const Nav = () => {
   // nav items
   const baseLinks = [
     { name: "Home", path: "/", icon: Home },
-    { name: "Trainings", path: "/trainings", icon: GraduationCap },
     { name: "Tools", path: "/tools", icon: VectorSquare },
     { name: "Enroll Now", path: "/enroll", icon: UserPlus },
   ];
