@@ -28,16 +28,6 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
   const nav = useMemo(
     () => [
       { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
-      {
-        name: "Tasks & Live Sessions",
-        base: "/admin/tasks",
-        icon: ClipboardList,
-        children: [
-          { name: "Add Task & Live Session", path: "/admin/tasks/add" },
-          { name: "All Tasks & Live Sessions", path: "/admin/tasks" },
-          { name: "Preview Tasks", path: "/admin/tasks/preview" },
-        ],
-      },
       { name: "Reports", path: "/admin/reports", icon: BarChart3 },
 
       {
@@ -53,7 +43,16 @@ export default function Sidebar({ isOpen = false, toggleSidebar = () => {} }) {
 
       { name: "Batches", path: "/admin/batches", icon: GraduationCap },
 
-     
+      {
+        name: "Tasks & Live Sessions",
+        base: "/admin/tasks",
+        icon: ClipboardList,
+        children: [
+          { name: "Add Task & Live Session", path: "/admin/tasks/add" },
+          { name: "All Tasks & Live Sessions", path: "/admin/tasks" },
+          { name: "Preview Tasks", path: "/admin/tasks/preview" },
+        ],
+      },
 
       // 🧰 Tools Section
       {

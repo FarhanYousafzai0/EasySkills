@@ -1,7 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Loader2, Calendar, ChevronDown, BookOpenCheck, Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  UserPlus,
+  Loader2,
+  Calendar,
+  ChevronDown,
+  BookOpenCheck,
+  Mail,
+  CheckCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AddStudent() {
@@ -20,12 +28,13 @@ export default function AddStudent() {
     enrolledCourses: [],
   });
 
+  // Updated plans (Both are 30 days)
   const plans = [
     { label: '1-on-1 Mentorship', duration: 30 },
-    { label: 'Group Mentorship', duration: 45 },
+    { label: 'Group Mentorship', duration: 30 },
   ];
 
-  // ✨ Load Batches + Courses
+  // Load Batches + Courses
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     setForm((p) => ({ ...p, joinDate: today }));
@@ -48,11 +57,9 @@ export default function AddStudent() {
   const toggleCourse = (id) => {
     setForm((prev) => {
       const selected = [...prev.enrolledCourses];
-      if (selected.includes(id)) {
-        return { ...prev, enrolledCourses: selected.filter((c) => c !== id) };
-      } else {
-        return { ...prev, enrolledCourses: [...selected, id] };
-      }
+      return selected.includes(id)
+        ? { ...prev, enrolledCourses: selected.filter((c) => c !== id) }
+        : { ...prev, enrolledCourses: [...selected, id] };
     });
   };
 
@@ -61,7 +68,6 @@ export default function AddStudent() {
     try {
       setLoading(true);
 
-      // Auto-set isEnrolled based on selected courses
       const submissionData = {
         ...form,
         isEnrolled: form.enrolledCourses.length > 0,
@@ -76,36 +82,8 @@ export default function AddStudent() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
 
-      // Success Message
-      if (data.emailSent) {
-        toast.success(
-          <div className="flex items-center gap-3">
-            <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
-            <div>
-              <p className="font-semibold text-gray-900">Student added successfully!</p>
-              <p className="text-sm text-gray-600 mt-1">
-                📧 Invitation email sent to <strong>{form.email}</strong>
-              </p>
-            </div>
-          </div>,
-          { duration: 6000 }
-        );
-      } else {
-        toast.warning(
-          <div className="flex items-center gap-3">
-            <AlertCircle className="text-orange-500 flex-shrink-0" size={24} />
-            <div>
-              <p className="font-semibold text-gray-900">Student added successfully!</p>
-              <p className="text-sm text-gray-600 mt-1">
-                ⚠️ Email sending failed: {data.emailError || 'Unknown error'}
-              </p>
-            </div>
-          </div>,
-          { duration: 8000 }
-        );
-      }
+      toast.success("Student Added Successfully");
 
-      // Reset
       setForm({
         name: '',
         email: '',
@@ -124,11 +102,12 @@ export default function AddStudent() {
   };
 
   const currentPlan = plans.find((p) => p.label === form.plan);
+
   const endDate =
     form.plan && form.joinDate
       ? new Date(
           new Date(form.joinDate).getTime() +
-            (form.plan === '1-on-1 Mentorship' ? 30 : 45) * 24 * 60 * 60 * 1000
+            currentPlan.duration * 24 * 60 * 60 * 1000
         )
       : null;
 
@@ -145,13 +124,15 @@ export default function AddStudent() {
             <UserPlus className="text-[#9380FD]" />
             Add New Student
           </h2>
-          <p className="text-sm text-gray-600 mt-1">Create a new student account and send invitation email</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Fill in the details to create a new student account.
+          </p>
         </div>
 
         {currentPlan && (
           <div className="flex items-center gap-2 text-sm text-gray-700 bg-[#ECCFFE]/60 px-4 py-2 rounded-lg">
             <BookOpenCheck className="h-4 w-4 text-[#7866FA]" />
-            <span className="font-medium">{currentPlan.duration}-Day Cycle</span>
+            <span className="font-medium">{currentPlan.duration}-Day Mentorship</span>
           </div>
         )}
       </div>
@@ -159,24 +140,24 @@ export default function AddStudent() {
       {/* Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Inputs */}
-        {[{ key: 'name', label: 'Full Name', type: 'text', required: true },
+        {[
+          { key: 'name', label: 'Full Name', type: 'text', required: true },
           { key: 'email', label: 'Email Address', type: 'email', required: true },
-          { key: 'phone', label: 'Phone Number', type: 'text', required: false }].map(
-          ({ key, label, type, required }) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {label} {required && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type={type}
-                value={form[key]}
-                required={required}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition"
-              />
-            </div>
-          )
-        )}
+          { key: 'phone', label: 'Phone Number', type: 'text', required: false },
+        ].map(({ key, label, type, required }) => (
+          <div key={key}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type={type}
+              value={form[key]}
+              required={required}
+              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 focus:outline-none transition"
+            />
+          </div>
+        ))}
 
         {/* Mentorship Plan */}
         <div>
@@ -187,7 +168,7 @@ export default function AddStudent() {
             value={form.plan}
             required
             onChange={(e) => setForm({ ...form, plan: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 bg-white"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:border-[#9380FD]"
           >
             <option value="">Select Mentorship Plan</option>
             {plans.map((p) => (
@@ -198,7 +179,7 @@ export default function AddStudent() {
           </select>
         </div>
 
-        {/* Batch (ALWAYS ENABLED now) */}
+        {/* Batch */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Assign Batch
@@ -206,7 +187,7 @@ export default function AddStudent() {
           <select
             value={form.batch}
             onChange={(e) => setForm({ ...form, batch: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20 bg-white"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:border-[#9380FD]"
           >
             <option value="">Select Batch</option>
             {batches.map((b) => (
@@ -227,12 +208,13 @@ export default function AddStudent() {
             value={form.joinDate}
             required
             onChange={(e) => setForm({ ...form, joinDate: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD] focus:ring-2 focus:ring-[#9380FD]/20"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:border-[#9380FD]"
           />
+
           {endDate && (
             <p className="text-xs mt-2 text-gray-600 flex items-center gap-1">
               <Calendar size={12} className="text-[#7866FA]" />
-              Mentorship ends on{' '}
+              Ends on{" "}
               <span className="font-semibold text-[#7866FA]">
                 {endDate.toLocaleDateString()}
               </span>
@@ -240,7 +222,7 @@ export default function AddStudent() {
           )}
         </div>
 
-        {/* COURSE SELECTION */}
+        {/* Course Selection */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Enroll in Courses (Optional)
@@ -255,8 +237,7 @@ export default function AddStudent() {
               {form.enrolledCourses.length > 0 ? (
                 <>
                   <CheckCircle size={16} className="text-green-500" />
-                  {form.enrolledCourses.length} Course
-                  {form.enrolledCourses.length > 1 ? 's' : ''} Selected
+                  {form.enrolledCourses.length} Selected
                 </>
               ) : (
                 <>
@@ -266,7 +247,9 @@ export default function AddStudent() {
               )}
             </span>
             <ChevronDown
-              className={`h-5 w-5 text-gray-600 transition-transform ${showCourses ? 'rotate-180' : ''}`}
+              className={`h-5 w-5 text-gray-600 transition-transform ${
+                showCourses ? 'rotate-180' : ''
+              }`}
             />
           </button>
 
@@ -281,7 +264,7 @@ export default function AddStudent() {
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {courses.length === 0 ? (
                     <div className="md:col-span-2 lg:col-span-3 text-center py-8 text-gray-500">
-                      No courses available. Create courses first.
+                      No courses available.
                     </div>
                   ) : (
                     courses.map((course) => {
@@ -324,17 +307,17 @@ export default function AddStudent() {
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
             disabled={loading}
-            className="bg-gradient-to-r cursor-pointer from-[#9380FD] to-[#7866FA] text-white px-8 py-3 rounded-xl shadow-lg flex items-center gap-2 disabled:opacity-50"
+            className="bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white px-8 py-3 rounded-xl shadow-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>
                 <Loader2 className="animate-spin" size={20} />
-                Adding Student...
+                Adding...
               </>
             ) : (
               <>
                 <UserPlus size={20} />
-                Add Student 
+                Add Student
               </>
             )}
           </motion.button>

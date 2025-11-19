@@ -141,9 +141,7 @@ const StudentSchema = new mongoose.Schema(
   }
 );
 
-// ✅ Add indexes for better query performance
-StudentSchema.index({ email: 1 });
-StudentSchema.index({ clerkId: 1 });
+
 
 export default mongoose.models.Student ||
   mongoose.model("Student", StudentSchema);

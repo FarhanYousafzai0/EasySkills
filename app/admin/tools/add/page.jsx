@@ -120,7 +120,7 @@ export default function AddToolPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <DollarSign size={16} className="text-[#7866FA]" /> Price (USD)
+                <DollarSign size={16} className="text-[#7866FA]" /> Price (PKR)
               </label>
               <input
                 type="number"

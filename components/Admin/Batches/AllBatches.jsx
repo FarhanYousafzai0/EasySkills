@@ -158,44 +158,75 @@ export default function AllBatches() {
         {!loading && batches.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {batches.map((batch) => (
-              <motion.div
-                key={batch._id}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.25 }}
-                className="rounded-xl border border-gray-200 p-5 bg-gray-50 hover:shadow-xl hover:border-[#9380FD]/40 transition-all duration-300 relative group cursor-pointer"
-              >
-                {/* Title & Description */}
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">{batch.title}</h3>
-                <p className="text-sm text-gray-600 line-clamp-3">{batch.description}</p>
-
-                {/* Dates */}
-                <div className="mt-4 text-xs text-gray-500 space-y-1">
-                  <p>
-                    <span className="font-medium text-gray-700">Start:</span> {formatDate(batch.startDate)}
-                  </p>
-                  <p>
-                    <span className="font-medium text-gray-700">End:</span> {formatDate(batch.endDate)}
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div className="absolute top-3 right-1 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    onClick={() => openEdit(batch)}
-                    className="p-2 rounded-md bg-gradient-to-r from-[#9380FD] to-[#7866FA] text-white shadow-md hover:opacity-90"
-                  >
-                    <Edit size={16} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    onClick={() => confirmDelete(batch._id)}
-                    className="p-2 rounded-md bg-red-500 text-white shadow-md hover:bg-red-600"
-                  >
-                    <Trash2 size={16} />
-                  </motion.button>
-                </div>
-              </motion.div>
+             <motion.div
+             key={batch._id}
+             whileHover={{ y: -4, scale: 1.015 }}
+             transition={{ duration: 0.25 }}
+             className="relative rounded-2xl overflow-hidden bg-white/90 backdrop-blur-xl 
+             border border-gray-200 shadow-sm hover:shadow-2xl hover:border-[#9380FD]/40 
+             transition-all duration-300 cursor-pointer group"
+           >
+             {/* Top Accent Bar */}
+             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#9380FD] to-[#7866FA]" />
+           
+             {/* Inner Content */}
+             <div className="p-6">
+               {/* Title */}
+               <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
+                 {batch.title}
+               </h3>
+           
+               {/* Description */}
+               <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                 {batch.description}
+               </p>
+           
+               {/* Divider */}
+               <div className="mt-4 mb-2 border-t border-gray-200" />
+           
+               {/* Dates */}
+               <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                 <p className="flex flex-col">
+                   <span className="font-semibold text-gray-700">Start</span>
+                   <span>{formatDate(batch.startDate)}</span>
+                 </p>
+                 <p className="flex flex-col">
+                   <span className="font-semibold text-gray-700">End</span>
+                   <span>{formatDate(batch.endDate)}</span>
+                 </p>
+               </div>
+             </div>
+           
+             {/* Floating Action Buttons */}
+             <div className="
+               absolute top-3 right-3 flex gap-2 opacity-0 
+               group-hover:opacity-100 transition-opacity duration-300
+             ">
+               {/* Edit Button */}
+               <motion.button
+                 whileHover={{ scale: 1.12 }}
+                 whileTap={{ scale: 0.95 }}
+                 onClick={() => openEdit(batch)}
+                 className="p-2 rounded-lg cursor-pointer bg-gradient-to-r 
+                 from-[#9380FD] to-[#7866FA] text-white shadow-md hover:shadow-lg 
+                 transition-all duration-200"
+               >
+                 <Edit size={16} />
+               </motion.button>
+           
+               {/* Delete Button */}
+               <motion.button
+                 whileHover={{ scale: 1.12 }}
+                 whileTap={{ scale: 0.95 }}
+                 onClick={() => confirmDelete(batch._id)}
+                 className="p-2 rounded-lg cursor-pointer bg-red-500 text-white 
+                 shadow-md hover:bg-red-600 hover:shadow-lg transition-all duration-200"
+               >
+                 <Trash2 size={16} />
+               </motion.button>
+             </div>
+           </motion.div>
+           
             ))}
           </div>
         )}
@@ -303,14 +334,14 @@ export default function AllBatches() {
                     setEditRange(undefined);
                   }
                 }}
-                className="px-5 py-2.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                className="px-5 py-2.5 cursor-pointer rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
                 disabled={editing}
-                className="px-5 py-2.5 rounded-md text-white bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90 disabled:opacity-60"
+                className="px-5 py-2.5 rounded-md cursor-pointer text-white bg-gradient-to-r from-[#9380FD] to-[#7866FA] hover:opacity-90 disabled:opacity-60"
               >
                 {editing ? 'Saving…' : 'Save Changes'}
               </button>

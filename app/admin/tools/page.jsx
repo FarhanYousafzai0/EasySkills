@@ -240,7 +240,8 @@ export default function AllToolsPage() {
                   <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-[#7866FA]">
-                        ${tool.price}
+                     Rs.
+                      {tool.price}
                       </span>
                       {tool.link && (
                         <a

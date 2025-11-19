@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
@@ -30,7 +30,8 @@ export default function EnrollNow() {
     if (!formData.name) newErrors.name = "Name is required";
     if (!formData.email) newErrors.email = "Email is required";
     if (!formData.whatsapp) newErrors.whatsapp = "WhatsApp number is required";
-    if (!formData.payment) newErrors.payment = "Please attach your payment screenshot";
+    if (!formData.payment)
+      newErrors.payment = "Payment screenshot is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -41,6 +42,7 @@ export default function EnrollNow() {
 
     setIsSubmitting(true);
 
+    // ❗ EmailJS integration placeholder (kept untouched)
     emailjs
       .send(
         "YOUR_SERVICE_ID",
@@ -56,7 +58,12 @@ export default function EnrollNow() {
         () => {
           setIsSubmitting(false);
           setSuccess(true);
-          setFormData({ name: "", email: "", whatsapp: "", payment: null });
+          setFormData({
+            name: "",
+            email: "",
+            whatsapp: "",
+            payment: null,
+          });
         },
         (error) => {
           console.error("FAILED...", error);
@@ -78,7 +85,8 @@ export default function EnrollNow() {
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-3">Enroll Now</h2>
           <p className="text-white/90 mb-8">
-            Complete your enrollment below to secure your mentorship seat.
+            Fill out the enrollment form below and upload your payment
+            screenshot to secure your mentorship seat.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,7 +103,9 @@ export default function EnrollNow() {
                   errors.name ? "border border-red-500" : "border border-transparent"
                 }`}
               />
-              {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+              {errors.name && (
+                <p className="text-red-400 text-sm mt-1">{errors.name}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -111,7 +121,9 @@ export default function EnrollNow() {
                   errors.email ? "border border-red-500" : "border border-transparent"
                 }`}
               />
-              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* WhatsApp */}
@@ -127,7 +139,9 @@ export default function EnrollNow() {
                   errors.whatsapp ? "border border-red-500" : "border border-transparent"
                 }`}
               />
-              {errors.whatsapp && <p className="text-red-400 text-sm mt-1">{errors.whatsapp}</p>}
+              {errors.whatsapp && (
+                <p className="text-red-400 text-sm mt-1">{errors.whatsapp}</p>
+              )}
             </div>
 
             {/* Payment Upload */}
@@ -143,7 +157,7 @@ export default function EnrollNow() {
                 )}
                 <Upload className="w-5 h-5 text-gray-500" />
               </label>
-              <input
+              <input 
                 id="payment"
                 type="file"
                 name="payment"
@@ -151,7 +165,9 @@ export default function EnrollNow() {
                 className="hidden"
                 onChange={handleChange}
               />
-              {errors.payment && <p className="text-red-400 text-sm mt-1">{errors.payment}</p>}
+              {errors.payment && (
+                <p className="text-red-400 text-sm mt-1">{errors.payment}</p>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -167,7 +183,7 @@ export default function EnrollNow() {
 
             {success && (
               <p className="text-green-400 text-sm mt-4">
-                ✅ Enrollment submitted successfully! We’ll contact you soon.
+                ✅ Enrollment submitted successfully! Our team will contact you soon.
               </p>
             )}
           </form>
@@ -182,29 +198,30 @@ export default function EnrollNow() {
         >
           <h3 className="text-2xl font-bold mb-4">Payment Details</h3>
           <p className="text-white/90 mb-6">
-            Once you’ve made the payment, upload your screenshot using the form.  
-            We’ll verify your payment and confirm your seat within 12 hours.
+          If you don’t receive a confirmation within 12 hours, please contact our team:   +92 309 5691621
+            
+        
           </p>
 
           <div className="space-y-4">
             <div className="p-4 bg-white/20 rounded-lg">
-              <p className="text-white/90 text-sm">Bank Name</p>
-              <p className="font-semibold">Habib Bank Limited</p>
+              <p className="text-white/90 text-sm">Account Title</p>
+              <p className="font-semibold">HASSAN ALI</p>
             </div>
 
             <div className="p-4 bg-white/20 rounded-lg">
-              <p className="text-white/90 text-sm">Account Title</p>
-              <p className="font-semibold">Easypay Pvt Ltd</p>
+              <p className="text-white/90 text-sm">Bank Name</p>
+              <p className="font-semibold">Meezan Bank</p>
             </div>
 
             <div className="p-4 bg-white/20 rounded-lg">
               <p className="text-white/90 text-sm">Account Number</p>
-              <p className="font-semibold">1234-5678-9012</p>
+              <p className="font-semibold">39010106987250</p>
             </div>
 
             <div className="p-4 bg-white/20 rounded-lg">
-              <p className="text-white/90 text-sm">UPI / Easypaisa / JazzCash</p>
-              <p className="font-semibold">+92 300 1234567</p>
+              <p className="text-white/90 text-sm">Easypaisa / JazzCash / SadaPay</p>
+              <p className="font-semibold">0335 5870108</p>
             </div>
           </div>
         </motion.div>
